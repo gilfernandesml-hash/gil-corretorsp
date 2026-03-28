@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Save, Loader2, AlertCircle, 
+import {
+  Save, Loader2, AlertCircle,
   Layout, Home, Image as ImageIcon, ListChecks, Contact, FileText, Search, Sparkles
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -55,7 +55,7 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingPlans, setUploadingPlans] = useState(false);
   const [imageInput, setImageInput] = useState('');
-  
+
   // Real-time SEO Feedback
   const [seoWarnings, setSeoWarnings] = useState([]);
 
@@ -65,11 +65,11 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
     description: initialData?.description || '',
     neighborhood: initialData?.neighborhood || '',
     address: initialData?.address || '',
-    location: initialData?.location || '', 
+    location: initialData?.location || '',
     lat: initialData?.lat || '',
     lng: initialData?.lng || '',
-    
-    business_type: initialData?.business_type || '', 
+
+    business_type: initialData?.business_type || '',
     price: initialData?.price || '',
     rental_price: initialData?.rental_price || '',
     starting_from_price: initialData?.starting_from_price || '',
@@ -80,13 +80,13 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
     suites: initialData?.suites || '',
     parking_spaces: initialData?.parking_spaces || '',
     area: initialData?.area || '',
-    
+
     images: initialData?.images || [],
     video_url: initialData?.video_url || initialData?.youtube_url || '',
     virtual_tour_url: initialData?.virtual_tour_url || '',
     plans_urls: initialData?.plans_urls || initialData?.floor_plans || [],
     featured: initialData?.featured || false,
-    
+
     amenities: initialData?.amenities || [],
     status: initialData?.status || 'active',
 
@@ -100,7 +100,7 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
     if (formData.plans_urls && formData.plans_urls.length > 0) {
       const normalizedPlans = formData.plans_urls.map(p => (typeof p === 'string' ? p : p.url));
       if (JSON.stringify(normalizedPlans) !== JSON.stringify(formData.plans_urls)) {
-         setFormData(prev => ({ ...prev, plans_urls: normalizedPlans }));
+        setFormData(prev => ({ ...prev, plans_urls: normalizedPlans }));
       }
     }
   }, []);
@@ -114,8 +114,8 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
   // Generate slug automatically
   useEffect(() => {
     if (mode === 'create' && formData.title && !formData.slug) {
-       const newSlug = generateSlug(formData.title);
-       setFormData(prev => ({ ...prev, slug: newSlug }));
+      const newSlug = generateSlug(formData.title);
+      setFormData(prev => ({ ...prev, slug: newSlug }));
     }
   }, [formData.title, mode]);
 
@@ -161,7 +161,7 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
   // SEO Generation Handler
   const handleGenerateSEO = () => {
     const { title, description, errors } = generateSEOForProperty(formData);
-    
+
     if (errors.length > 0) {
       toast({
         title: "Impossível gerar SEO",
@@ -187,15 +187,14 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
   const handleImageUpload = async (e, field = 'images') => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    
+
     const isPlans = field === 'plans_urls';
     isPlans ? setUploadingPlans(true) : setUploadingImages(true);
 
     try {
       const newImages = [];
       for (const file of files) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${isPlans ? 'plan_' : 'prop_'}${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const fileName = `${isPlans ? 'plan_' : 'prop_'}${Date.now()}_${Math.random().toString(36).substring(2, 9)};
         const { error } = await supabase.storage.from('property-images').upload(fileName, file);
         if (error) throw error;
         const { data } = supabase.storage.from('property-images').getPublicUrl(fileName);
@@ -504,12 +503,12 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
                     {AMENITIES_LIST.map((item) => (
                       <div key={item} className="flex items-center space-x-2">
                         <Checkbox 
-                          id={`amenity-${item}`} 
+                          id={`amenity-${ item } `} 
                           checked={(formData.amenities || []).includes(item)}
                           onCheckedChange={(checked) => handleAmenityChange(item, checked)}
                         />
                         <label 
-                          htmlFor={`amenity-${item}`} 
+                          htmlFor={`amenity - ${ item } `} 
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none text-gray-700"
                         >
                           {item}
