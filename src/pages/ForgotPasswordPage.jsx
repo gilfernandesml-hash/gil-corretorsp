@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
+import Seo from '@/components/Seo';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -58,9 +58,7 @@ const ForgotPasswordPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Recuperar Senha | Imóveis SP</title>
-      </Helmet>
+      <Seo title="Recuperar senha" canonical="/forgot-password" noindex />
 
       <div className="min-h-screen pt-16 flex items-center justify-center bg-[#f5f7fa] px-4">
         <motion.div

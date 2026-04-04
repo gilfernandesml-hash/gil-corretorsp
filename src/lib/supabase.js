@@ -4,11 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// 🔍 DEBUG (MUITO IMPORTANTE AGORA)
-console.log("=== SUPABASE DEBUG ===");
-console.log("URL:", supabaseUrl);
-console.log("KEY:", supabaseAnonKey ? "OK (existe)" : "MISSING");
-console.log("ENV:", import.meta.env);
+if (import.meta.env.DEV) {
+  console.log("=== SUPABASE DEBUG ===");
+  console.log("URL:", supabaseUrl);
+  console.log("KEY:", supabaseAnonKey ? "OK (existe)" : "MISSING");
+}
 
 // 🚨 Validação
 if (!supabaseUrl || !supabaseAnonKey) {

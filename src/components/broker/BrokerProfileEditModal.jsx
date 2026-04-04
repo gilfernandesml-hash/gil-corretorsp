@@ -199,7 +199,13 @@ const BrokerProfileEditModal = ({ isOpen, onClose, broker, onSuccess }) => {
                 ) : null}
                 
                 {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <User className="w-12 h-12 text-gray-400" />
                 )}

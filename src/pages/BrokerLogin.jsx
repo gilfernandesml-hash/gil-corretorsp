@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import Seo from '@/components/Seo';
 
 const BrokerLogin = () => {
   const [email, setEmail] = useState('');
@@ -28,10 +28,7 @@ const BrokerLogin = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Login Corretor | Imóveis SP</title>
-        <meta name="description" content="Acesse sua conta de corretor" />
-      </Helmet>
+      <Seo title="Login Corretor" canonical="/broker/login" noindex />
 
       <div className="min-h-screen bg-gradient-to-br from-[#1a3a52] to-[#0d5a7a] flex items-center justify-center px-4 pt-20">
         <motion.div

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -7,6 +6,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import PropertyCard from '@/components/PropertyCard';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Seo from '@/components/Seo';
 
 const FavoritesPage = () => {
   const { user } = useAuth();
@@ -44,9 +44,7 @@ const FavoritesPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Meus Favoritos | Imóveis SP</title>
-      </Helmet>
+      <Seo title="Meus favoritos" canonical="/favoritos" noindex />
 
       <div className="min-h-screen bg-[#f5f7fa] pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

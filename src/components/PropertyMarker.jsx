@@ -28,6 +28,8 @@ const PropertyMarker = ({ property }) => {
             <img 
               src={property.images?.[0] || 'https://via.placeholder.com/300x200'} 
               alt={property.title}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
             <div className="absolute top-2 left-2">

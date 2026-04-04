@@ -111,6 +111,8 @@ const FloorPlansModal = ({ isOpen, plans = [], onClose, initialIndex = 0 }) => {
                 <img
                   src={currentSrc}
                   alt={`Planta ${currentIndex + 1}`}
+                  loading="lazy"
+                  decoding="async"
                   className="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg bg-white select-none pointer-events-none"
                   draggable={false}
                 />

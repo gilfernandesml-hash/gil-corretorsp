@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Mail, Lock, LogIn, ArrowRight, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { debugLogin } from '@/lib/authDebug';
+import Seo from '@/components/Seo';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -99,9 +99,7 @@ const LoginPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Login | Imóveis SP</title>
-      </Helmet>
+      <Seo title="Login" canonical="/login" noindex />
 
       <div className="min-h-screen pt-16 flex items-center justify-center bg-[#f5f7fa] px-4">
         <motion.div

@@ -5,12 +5,9 @@ import { AuthProvider } from '@/context/AuthContext';
 import Navigation from '@/components/Navigation';
 import ScrollToTop from '@/components/ScrollToTop';
 import LoadingFallback from '@/components/LoadingFallback';
+import Footer from '@/components/Footer';
 import { initPerformanceMonitoring } from '@/utils/performanceReporter';
 import { setupScriptLoader } from '@/utils/scriptLoader';
-
-// Tidio Chat Integration - Lazy Loaded logic inside
-import TidioScript from '@/components/TidioScript';
-import TidioDebugPanel from '@/components/TidioDebugPanel';
 
 // Eager Pages (Critical Path)
 import HomePage from '@/pages/HomePage';
@@ -22,6 +19,7 @@ const PropertyListPage = lazy(() => import('@/pages/PropertyListPage'));
 const PropertyDetailPage = lazy(() => import('@/pages/PropertyDetailPage'));
 const PropertyMapPage = lazy(() => import('@/pages/PropertyMapPage'));
 const NeighborhoodPage = lazy(() => import('@/pages/NeighborhoodPage'));
+const NeighborhoodHubPage = lazy(() => import('@/pages/NeighborhoodHubPage'));
 const BlogPage = lazy(() => import('@/pages/BlogPage'));
 const BlogDetailPage = lazy(() => import('@/pages/BlogDetailPage'));
 const UserProfilePage = lazy(() => import('@/pages/UserProfilePage'));
@@ -47,9 +45,6 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <TidioScript />
-        <TidioDebugPanel />
-        
         <div className="min-h-screen bg-[#f5f7fa] font-sans">
           <Navigation />
           <Suspense fallback={<LoadingFallback />}>
@@ -63,6 +58,7 @@ function App() {
               <Route path="/imoveis" element={<PropertyListPage />} />
               <Route path="/properties/map" element={<PropertyMapPage />} />
               <Route path="/imovel/:slug" element={<PropertyDetailPage />} />
+              <Route path="/bairros" element={<NeighborhoodHubPage />} />
               <Route path="/neighborhood/:neighborhoodSlug" element={<NeighborhoodPage />} /> 
               <Route path="/search" element={<SearchPage />} />
               <Route path="/contact" element={<ContactPage />} />
@@ -76,11 +72,13 @@ function App() {
               <Route path="/broker/dashboard" element={<ProtectedRoute><BrokerDashboard /></ProtectedRoute>} />
               <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard initialTab="properties" /></ProtectedRoute>} />
               <Route path="/admin/seo-management" element={<ProtectedRoute><AdminDashboard initialTab="seo" /></ProtectedRoute>} />
+              <Route path="/admin/leads" element={<ProtectedRoute><AdminDashboard initialTab="leads" /></ProtectedRoute>} />
               
               <Route path="/404" element={<NotFoundPage />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
           </Suspense>
+          <Footer />
           <ScrollToTop />
           <Toaster />
         </div>

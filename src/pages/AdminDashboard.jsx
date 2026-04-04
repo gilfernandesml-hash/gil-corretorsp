@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from 'react';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, PlusCircle, Settings, Layout, Upload, Search, Database, Trash2, Loader2 } from 'lucide-react';
@@ -12,12 +11,14 @@ import PropertyImportPage from '@/components/admin/PropertyImportPage';
 import SEOStatusDashboard from '@/components/admin/SEOStatusDashboard';
 import SEOMigrationScript from '@/components/admin/SEOMigrationScript';
 import DataExportSection from '@/components/admin/DataExportSection';
+import LeadsManagement from '@/components/admin/LeadsManagement';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { deletePropertiesWithoutDescription } from '@/utils/deleteEmptyProperties';
+import Seo from '@/components/Seo';
 
 const AdminDashboard = ({ initialTab = "properties" }) => {
   const { user, broker } = useAuth();
@@ -73,9 +74,7 @@ const AdminDashboard = ({ initialTab = "properties" }) => {
   
   return (
     <>
-      <Helmet>
-        <title>Dashboard Admin | Imóveis SP</title>
-      </Helmet>
+      <Seo title="Dashboard Admin" canonical="/admin/dashboard" noindex />
 
       <div className="min-h-screen pt-24 pb-12 bg-[#f5f7fa] px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -141,6 +140,13 @@ const AdminDashboard = ({ initialTab = "properties" }) => {
                   >
                     <Database className="w-4 h-4 mr-2" /> Backup / Export
                   </TabsTrigger>
+
+                  <TabsTrigger 
+                    value="leads" 
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1a3a52] px-6 py-3 rounded-lg text-gray-600 font-medium transition-all whitespace-nowrap"
+                  >
+                    Leads
+                  </TabsTrigger>
                   <TabsTrigger 
                     value="homepage" 
                     className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1a3a52] px-6 py-3 rounded-lg text-gray-600 font-medium transition-all whitespace-nowrap"
@@ -183,6 +189,10 @@ const AdminDashboard = ({ initialTab = "properties" }) => {
                 
                 <TabsContent value="export" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
                   <DataExportSection />
+                </TabsContent>
+
+                <TabsContent value="leads" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                  <LeadsManagement />
                 </TabsContent>
 
                 <TabsContent value="homepage" className="mt-0 focus-visible:outline-none focus-visible:ring-0">

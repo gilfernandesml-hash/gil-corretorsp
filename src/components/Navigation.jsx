@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Search, FileText, User, LogOut, LayoutDashboard, ChevronDown, MessageCircle, Phone } from 'lucide-react';
+import { Menu, X, Home, Search, FileText, User, LogOut, LayoutDashboard, ChevronDown, MessageCircle, Phone, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLogoLoaded, setIsLogoLoaded] = useState(true);
   const location = useLocation();
   const {
     user,
@@ -53,13 +54,26 @@ const Navigation = () => {
     }
   };
   return <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-lg' : 'bg-white/95 backdrop-blur-md'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#1a3a52] to-[#0d5a7a] rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:rotate-3">
-              <span className="text-white font-bold text-xl">SP</span>
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="logo h-[88px] h-[88px] flex items-center justify-center transition-all duration-300 transform group-hover:rotate-3">
+              {isLogoLoaded ? (
+                <img
+                  src="/logo-gil-corretor-sp.png"
+                  alt="Gil Corretor SP"
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                  decoding="async"
+                  onError={() => setIsLogoLoaded(false)}
+                />
+              ) : (
+                <span className="text-white font-bold text-xl bg-gradient-to-br from-[#1a3a52] to-[#0d5a7a] w-full h-full flex items-center justify-center">
+                  SP
+                </span>
+              )}
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-bold text-[#1a3a52] leading-none">Gil Fernandes Imóveis</span>
@@ -71,15 +85,16 @@ const Navigation = () => {
           <div className="hidden md:flex items-center space-x-8">
             
             {/* Phone Number Display */}
-            <button onClick={handlePhoneClick} className="flex items-center gap-2 text-[#1a3a52] hover:text-[#ff8c42] font-medium transition-colors group" title="Fale Conosco">
+            <button onClick={handlePhoneClick} className="hidden 2xl:flex items-center gap-2 text-[#1a3a52] hover:text-[#ff8c42] font-medium transition-colors group flex-shrink-0" title="Fale Conosco">
               <div className="bg-[#1a3a52]/5 p-1.5 rounded-full group-hover:bg-[#ff8c42]/10 transition-colors">
                  <Phone className="w-4 h-4" />
               </div>
-              <span>(11) 97115-7373</span>
+              <span className="whitespace-nowrap">(11) 97115-7373</span>
             </button>
 
             <Link to="/" className="text-[#1a3a52] hover:text-[#ff8c42] font-medium transition-colors">Início</Link>
             <Link to="/imoveis" className="text-[#1a3a52] hover:text-[#ff8c42] font-medium transition-colors">Imóveis</Link>
+            <Link to="/bairros" className="text-[#1a3a52] hover:text-[#ff8c42] font-medium transition-colors">Bairros</Link>
             <Link to="/blog" className="text-[#1a3a52] hover:text-[#ff8c42] font-medium transition-colors">Blog</Link>
             
             <div className="h-6 w-px bg-gray-200"></div>
@@ -170,6 +185,9 @@ const Navigation = () => {
               </Link>
               <Link to="/imoveis" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-[#1a3a52] font-medium">
                 <Search className="w-5 h-5" /> <span>Imóveis</span>
+              </Link>
+              <Link to="/bairros" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-[#1a3a52] font-medium">
+                <MapPin className="w-5 h-5" /> <span>Bairros</span>
               </Link>
               <Link to="/blog" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-[#1a3a52] font-medium">
                 <FileText className="w-5 h-5" /> <span>Blog</span>

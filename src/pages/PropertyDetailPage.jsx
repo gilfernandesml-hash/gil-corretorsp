@@ -1,14 +1,13 @@
 import React, { useState, useMemo, Suspense, lazy, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { Bed, Bath, Car, Maximize, MapPin, ArrowLeft, Loader2, Map as MapIcon, Video, Rotate3D, Phone, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import PropertyDescription from '@/components/PropertyDescription';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import Seo from '@/components/Seo';
 import useProperty from '@/hooks/useProperty';
-import { useTidioChat } from '@/hooks/useTidioChat';
 import { cn } from '@/lib/utils';
 import { generatePropertyTitle, generatePropertyDescription } from '@/utils/seoHelpers';
 import { generatePropertySchema } from '@/utils/generatePropertySchema';
@@ -26,7 +25,6 @@ const VirtualTourEmbed = lazy(() => import('@/components/property/VirtualTourEmb
 const PropertyDetailPage = () => {
   const { slug } = useParams();
   const { property, loading, error } = useProperty(slug);
-  const { setPropertyContext } = useTidioChat();
 
   const [photoModalIndex, setPhotoModalIndex] = useState(0);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
@@ -46,12 +44,6 @@ const PropertyDetailPage = () => {
 
   useEffect(() => {
     if (property) {
-      setPropertyContext({
-        id: property.id,
-        title: property.title,
-        price: property.starting_from_price || property.price || property.rental_price,
-      });
-
       trackPropertyView({
         property_slug: property.slug,
         deal_type: property.business_type,
@@ -84,11 +76,19 @@ const PropertyDetailPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{seoTitle}</title>
-        <meta name="description" content={seoDesc} />
-        <script type="application/ld+json">{JSON.stringify(schema)}</script>
-      </Helmet>
+      <Seo
+        title={seoTitle}
+        description={seoDesc}
+        canonical={`/imovel/${property.slug}`}
+        type="product"
+        image={property.images?.[0]}
+        keywords={[
+          `${property.type || 'imóvel'} em ${property.neighborhood}`,
+          `imóvel em ${property.neighborhood} sp`,
+          property.business_type === 'rent' ? 'aluguel são paulo' : 'venda são paulo'
+        ]}
+        schema={schema}
+      />
 
       <div className="bg-[#f5f7fa] min-h-screen pt-24 pb-16">
         <div className="max-w-7xl mx-auto px-4">

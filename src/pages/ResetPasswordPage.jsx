@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
+import Seo from '@/components/Seo';
 
 const ResetPasswordPage = () => {
   const [password, setPassword] = useState('');
@@ -84,9 +84,7 @@ const ResetPasswordPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Redefinir Senha | Imóveis SP</title>
-      </Helmet>
+      <Seo title="Redefinir senha" canonical="/reset-password" noindex />
 
       <div className="min-h-screen pt-16 flex items-center justify-center bg-[#f5f7fa] px-4">
         <motion.div

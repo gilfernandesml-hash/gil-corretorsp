@@ -1,16 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { Home, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Seo from '@/components/Seo';
 
 const NotFoundPage = () => {
   return (
     <>
-      <Helmet>
-        <title>Página Não Encontrada | Imóveis SP</title>
-        <meta name="description" content="Página não encontrada" />
-      </Helmet>
+      <Seo title="Página não encontrada" canonical="/404" noindex />
 
       <div className="min-h-screen bg-[#f5f7fa] flex items-center justify-center px-4 pt-20">
         <div className="text-center">

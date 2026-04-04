@@ -84,6 +84,7 @@ const ImageOptimizer = ({
             width={width}
             height={height}
             loading={priority ? "eager" : "lazy"}
+            decoding="async"
             fetchPriority={priority ? "high" : "auto"}
             onLoad={() => setIsLoaded(true)}
             className={cn(

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { User, Heart, Calendar, LogOut, Settings, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
+import ImageOptimizer from '@/components/ImageOptimizer';
+import Seo from '@/components/Seo';
 
 const UserProfilePage = () => {
   const { user, logout, broker } = useAuth();
@@ -74,14 +75,11 @@ const UserProfilePage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Meu Perfil | Imóveis SP</title>
-      </Helmet>
+      <Seo title="Meu perfil" canonical="/perfil" noindex />
 
-      <div className="min-h-screen bg-[#f5f7fa] pt-24 pb-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="min-h-screen bg-[#f5f7fa] pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
             {/* Sidebar Profile Card */}
             <div className="md:col-span-1">
               <div className="bg-white rounded-2xl shadow-lg p-6 text-center sticky top-24">
@@ -151,14 +149,23 @@ const UserProfilePage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {favorites.map(prop => (
                         <div key={prop.id} className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                          <img src={prop.images?.[0]} alt={prop.title} className="w-full h-40 object-cover" />
+                          <ImageOptimizer
+                            src={prop.images?.[0]}
+                            alt={prop.title}
+                            className="w-full h-40 object-cover"
+                            width={800}
+                            height={320}
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                          />
                           <div className="p-4">
                             <h4 className="font-bold text-[#1a3a52] truncate">{prop.title}</h4>
                             <p className="text-[#0d5a7a] font-bold text-sm mt-1">
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prop.price || prop.rental_price)}
                             </p>
-                            <Link to={`/imovel/${prop.id}`}>
-                              <Button size="sm" variant="outline" className="w-full mt-3">Ver Detalhes</Button>
+                            <Link to={`/imovel/${prop.slug}`}>
+                              <Button size="sm" className="w-full mt-3 bg-[#1a3a52] hover:bg-[#132c3e] text-white">
+                                Ver detalhes
+                              </Button>
                             </Link>
                           </div>
                         </div>
@@ -174,7 +181,15 @@ const UserProfilePage = () => {
                         <div key={lead.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:bg-gray-50">
                           <div className="flex items-center">
                             <div className="w-12 h-12 bg-gray-200 rounded-lg mr-4 overflow-hidden">
-                                {lead.property?.images?.[0] && <img src={lead.property.images[0]} className="w-full h-full object-cover" alt="" />}
+                                {lead.property?.images?.[0] && (
+                                  <img
+                                    src={lead.property.images[0]}
+                                    className="w-full h-full object-cover"
+                                    alt=""
+                                    loading="lazy"
+                                    decoding="async"
+                                  />
+                                )}
                             </div>
                             <div>
                               <p className="font-bold text-[#1a3a52]">{lead.property?.title || 'Imóvel Indisponível'}</p>

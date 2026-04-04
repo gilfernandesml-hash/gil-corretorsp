@@ -227,6 +227,19 @@ const PropertyCard = ({ property, index = 0, layout = 'grid' }) => {
 
         <AmenitiesDisplay amenities={property.amenities} />
 
+        <div className="mt-4 grid grid-cols-1 gap-2">
+          <WhatsAppButton
+            property={property}
+            className="w-full"
+            label="Falar no WhatsApp"
+          />
+          <Link to={`/imovel/${property.slug}`} className="w-full">
+            <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white">
+              Ver detalhes
+            </Button>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-4 mt-auto">
           <div className="flex flex-col items-center text-center">
             <Bed className="w-5 h-5 text-gray-400 mb-1" />

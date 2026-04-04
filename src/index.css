@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+.logo img {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: block;
+}
+
+.logo {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

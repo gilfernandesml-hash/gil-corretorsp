@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import Seo from '@/components/Seo';
 
 // Data & Helpers
 import { fetchNeighborhoodBySlug, fetchPropertiesByNeighborhood } from '@/lib/neighborhoodData';
@@ -129,36 +129,20 @@ const NeighborhoodPage = () => {
     
     return (
         <>
-            <Helmet>
-                <title>{seoData.title}</title>
-                <meta name="description" content={seoData.description} />
-                <link rel="canonical" href={seoData.canonical} />
-                
-                {/* OG Tags */}
-                <meta property="og:title" content={seoData.ogTitle} />
-                <meta property="og:description" content={seoData.ogDescription} />
-                <meta property="og:image" content={seoData.ogImage} />
-                <meta property="og:type" content={seoData.ogType} />
-                <meta property="og:url" content={seoData.ogUrl} />
-                
-                {/* Twitter Tags */}
-                <meta name="twitter:card" content={seoData.twitterCard} />
-                <meta name="twitter:title" content={seoData.twitterTitle} />
-                <meta name="twitter:description" content={seoData.twitterDescription} />
-                <meta name="twitter:image" content={seoData.twitterImage} />
-
-                {/* Schemas */}
-                {neighborhood.schema && (
-                    <script type="application/ld+json">
-                        {JSON.stringify(neighborhood.schema)}
-                    </script>
-                )}
-                {faqSchema && (
-                    <script type="application/ld+json">
-                        {JSON.stringify(faqSchema)}
-                    </script>
-                )}
-            </Helmet>
+            <Seo
+                title={seoData.title}
+                description={seoData.description}
+                canonical={seoData.canonical}
+                type={seoData.ogType}
+                image={seoData.ogImage}
+                keywords={[
+                    `imóveis em ${neighborhood.name}`,
+                    `apartamentos em ${neighborhood.name}`,
+                    `imóveis ${neighborhood.name} sp`,
+                    'mercado imobiliário são paulo'
+                ]}
+                schema={[neighborhood.schema, faqSchema].filter(Boolean)}
+            />
 
             <main className="min-h-screen bg-[#f5f7fa] pb-20">
                 <NeighborhoodHero 

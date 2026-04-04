@@ -68,6 +68,8 @@ const VideoEmbed = ({ url, title, className }) => {
             <img 
               src={thumbnailUrl} 
               alt={title || "Video thumbnail"} 
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" 
             />
           )}

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
-import { Helmet } from 'react-helmet';
 import { AnimatePresence } from 'framer-motion';
 import { Filter, LayoutGrid, LayoutList, Check, Building2, Key, Loader2, Map as MapIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -10,6 +9,7 @@ import { cn, normalizeString } from '@/lib/utils';
 import { formatPrice } from '@/utils/seoHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import { trackWhatsAppClick } from '@/utils/analyticsEvents';
+import Seo from '@/components/Seo';
 
 // Lazy load heavy components
 const PropertyCard = lazy(() => import('@/components/PropertyCard'));
@@ -135,11 +135,20 @@ const PropertyListPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Imóveis à Venda e Locação | Imóveis SP</title>
-        <meta name="description" content="Encontre imóveis para venda e locação em São Paulo. Apartamentos, casas e comerciais." />
-      </Helmet>
-
+      <Seo
+        title="Imóveis à Venda e Locação em São Paulo | Imóveis SP"
+        description="Encontre imóveis para venda e locação em São Paulo. Apartamentos, casas, studios e imóveis comerciais nos melhores bairros."
+        canonical={`/imoveis${typeof window !== 'undefined' ? window.location.search : ''}`}
+        type="website"
+        keywords={[
+          'imóveis à venda são paulo',
+          'imóveis para alugar são paulo',
+          'apartamentos são paulo',
+          'casas são paulo',
+          'imóveis por bairro sp'
+        ]}
+      />
+      
       <div className="min-h-screen bg-[#f5f7fa] pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           

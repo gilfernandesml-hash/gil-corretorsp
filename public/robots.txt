@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://corretorfernandes.online/sitemap.xml
+Sitemap: https://gilcorretorsp.com.br/sitemap.xml

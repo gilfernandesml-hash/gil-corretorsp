@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Phone, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import Seo from '@/components/Seo';
 
 const BrokerRegister = () => {
   const [formData, setFormData] = useState({
@@ -52,10 +52,7 @@ const BrokerRegister = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Cadastro Corretor | Imóveis SP</title>
-        <meta name="description" content="Cadastre-se como corretor" />
-      </Helmet>
+      <Seo title="Cadastro Corretor" canonical="/broker/register" noindex />
 
       <div className="min-h-screen bg-gradient-to-br from-[#1a3a52] to-[#0d5a7a] flex items-center justify-center px-4 py-24">
         <motion.div

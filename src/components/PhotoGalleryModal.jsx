@@ -140,6 +140,8 @@ const PhotoGalleryModal = ({ isOpen, onClose, images = [], initialIndex = 0 }) =
               alt={`Gallery image ${currentIndex + 1}`}
               className="max-h-full max-w-full object-contain rounded-lg shadow-2xl"
               onClick={(e) => e.stopPropagation()}
+              loading="lazy"
+              decoding="async"
               
               // Touch Event Handlers
               onTouchStart={handleTouchStart}
@@ -182,6 +184,8 @@ const PhotoGalleryModal = ({ isOpen, onClose, images = [], initialIndex = 0 }) =
                 <img
                   src={img}
                   alt={`Thumbnail ${idx + 1}`}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </button>

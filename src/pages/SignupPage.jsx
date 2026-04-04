@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Phone, MessageSquare, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import Seo from '@/components/Seo';
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -92,9 +92,7 @@ const SignupPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Cadastro | Imóveis SP</title>
-      </Helmet>
+      <Seo title="Cadastro" canonical="/cadastro" noindex />
 
       <div className="min-h-screen pt-20 flex items-center justify-center bg-[#f5f7fa] px-4 py-12">
         <motion.div

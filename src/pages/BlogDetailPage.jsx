@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { Calendar, User, ArrowLeft, Clock, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { initialBlogPosts } from '@/lib/blogData';
+import ImageOptimizer from '@/components/ImageOptimizer';
+import Seo from '@/components/Seo';
 
 const BlogDetailPage = () => {
   const { slug } = useParams();
@@ -59,6 +60,20 @@ const BlogDetailPage = () => {
 
   // Support for both raw HTML and our old markdown-like syntax
   const isHtml = post.content?.includes('<p>') || post.content?.includes('<h2>');
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt,
+    image: post.featured_image,
+    datePublished: post.created_at,
+    dateModified: post.updated_at || post.created_at,
+    author: {
+      '@type': 'Person',
+      name: post.author || 'Equipe Imóveis SP'
+    }
+  };
   
   const formatContent = (content) => {
     if (!content) return null;
@@ -75,14 +90,15 @@ const BlogDetailPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{post.title} | Blog Imóveis SP</title>
-        <meta name="description" content={post.excerpt} />
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.excerpt} />
-        <meta property="og:image" content={post.featured_image} />
-        <meta property="og:type" content="article" />
-      </Helmet>
+      <Seo
+        title={`${post.title} | Blog Imóveis SP`}
+        description={post.excerpt}
+        canonical={`/blog/${post.slug}`}
+        type="article"
+        image={post.featured_image}
+        keywords={[post.category, 'mercado imobiliário são paulo', 'imóveis em são paulo'].filter(Boolean)}
+        schema={articleSchema}
+      />
 
       <div className="min-h-screen bg-white pt-24 pb-16">
         <article className="max-w-4xl mx-auto px-4 sm:px-6">
@@ -125,10 +141,13 @@ const BlogDetailPage = () => {
           </header>
 
           <div className="mb-10 rounded-2xl overflow-hidden shadow-lg bg-gray-100">
-            <img 
-              src={post.featured_image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80'} 
-              alt={post.title} 
-              className="w-full h-[300px] md:h-[500px] object-cover hover:scale-105 transition-transform duration-700" 
+            <ImageOptimizer
+              src={post.featured_image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80'}
+              alt={post.title}
+              className="w-full h-[300px] md:h-[500px] object-cover hover:scale-105 transition-transform duration-700"
+              width={1200}
+              height={500}
+              sizes="100vw"
             />
           </div>
           

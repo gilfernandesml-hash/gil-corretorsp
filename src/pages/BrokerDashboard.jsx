@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Star, Users, Home as HomeIcon, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import ConfirmationDialog from '@/components/ConfirmationDialog';
 import PropertyForm from '@/components/admin/PropertyForm';
 import BrokerProfileEditModal from '@/components/broker/BrokerProfileEditModal';
 import { ensureBrokerExists } from '@/lib/ensureBrokerExists';
+import Seo from '@/components/Seo';
 
 const BrokerDashboard = () => {
   const { user, broker: authBroker } = useAuth();
@@ -205,15 +205,11 @@ const BrokerDashboard = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Dashboard Corretor | Imóveis SP</title>
-      </Helmet>
+      <Seo title="Dashboard Corretor" canonical="/broker/dashboard" noindex />
 
-      <div className="min-h-screen bg-[#f5f7fa] pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div className="min-h-screen bg-[#f5f7fa] pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold text-[#1a3a52]">Dashboard</h1>
@@ -333,6 +329,8 @@ const BrokerDashboard = () => {
                             <img
                               src={property.images?.[0] || 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914'}
                               alt={property.title}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full md:w-32 h-32 object-cover rounded-lg"
                             />
                             

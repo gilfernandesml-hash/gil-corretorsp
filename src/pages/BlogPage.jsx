@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ImageOptimizer from '@/components/ImageOptimizer';
+import Seo from '@/components/Seo';
 import { supabase } from '@/lib/supabase';
 import { initialBlogPosts } from '@/lib/blogData';
 
@@ -52,12 +53,20 @@ const BlogPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Blog Imobiliário | Dicas e Tendências | Imóveis SP</title>
-        <meta name="description" content="Fique por dentro das últimas notícias, dicas e tendências do mercado imobiliário de São Paulo." />
-      </Helmet>
-      
-      <div className="min-h-screen bg-[#f5f7fa] pt-24 pb-16">
+      <Seo
+        title="Blog Imóveis SP | Mercado Imobiliário em São Paulo"
+        description="Notícias, tendências, análises do mercado imobiliário em São Paulo e dicas para comprar, vender ou alugar com segurança."
+        canonical="/blog"
+        type="website"
+        keywords={[
+          'blog imobiliário são paulo',
+          'mercado imobiliário sp',
+          'dicas para comprar apartamento em sp',
+          'investimento imobiliário são paulo'
+        ]}
+      />
+
+      <div className="min-h-screen bg-[#f5f7fa] pt-32 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center mb-12">
@@ -109,10 +118,13 @@ const BlogPage = () => {
                   className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:border-[#0d5a7a]/20 transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <div className="relative h-56 overflow-hidden bg-gray-100">
-                    <img 
-                      src={post.featured_image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80'} 
-                      alt={post.title} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    <ImageOptimizer
+                      src={post.featured_image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80'}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      width={800}
+                      height={448}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     <div className="absolute top-4 left-4">
                       <span className="bg-white/95 backdrop-blur-sm text-[#0d5a7a] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
