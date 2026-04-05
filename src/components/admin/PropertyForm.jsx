@@ -60,6 +60,7 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
   const [seoWarnings, setSeoWarnings] = useState([]);
 
   const [formData, setFormData] = useState({
+    code: initialData?.code || '',
     title: initialData?.title || '',
     slug: initialData?.slug || '',
     description: initialData?.description || '',
@@ -95,13 +96,21 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
     meta_description: initialData?.meta_description || ''
   });
 
-  // Ensure plans_urls is always an array of strings
+  // Ensure media fields are always arrays of storage paths (strings)
   useEffect(() => {
-    if (formData.plans_urls && formData.plans_urls.length > 0) {
-      const normalizedPlans = formData.plans_urls.map(p => (typeof p === 'string' ? p : p.url));
-      if (JSON.stringify(normalizedPlans) !== JSON.stringify(formData.plans_urls)) {
-         setFormData(prev => ({ ...prev, plans_urls: normalizedPlans }));
-      }
+    const normalizeList = (list) => {
+      if (!Array.isArray(list)) return [];
+      return list
+        .map((p) => (typeof p === 'string' ? p : (p?.url || p?.publicUrl || p?.path || '')))
+        .map(toStoragePath)
+        .filter(Boolean);
+    };
+
+    const nextImages = normalizeList(formData.images);
+    const nextPlans = normalizeList(formData.plans_urls);
+
+    if (JSON.stringify(nextImages) !== JSON.stringify(formData.images) || JSON.stringify(nextPlans) !== JSON.stringify(formData.plans_urls)) {
+      setFormData((prev) => ({ ...prev, images: nextImages, plans_urls: nextPlans }));
     }
   }, []);
 
@@ -158,6 +167,26 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
     });
   };
 
+  const toStoragePath = (value) => {
+    if (typeof value !== 'string') return '';
+    const v = value.trim();
+    if (!v) return '';
+
+    const marker = '/storage/v1/object/public/property-images/';
+    const idx = v.indexOf(marker);
+    if (idx !== -1) {
+      const after = v.slice(idx + marker.length);
+      const clean = after.split('?')[0];
+      try {
+        return decodeURIComponent(clean);
+      } catch {
+        return clean;
+      }
+    }
+
+    return v;
+  };
+
   // SEO Generation Handler
   const handleGenerateSEO = () => {
     const { title, description, errors } = generateSEOForProperty(formData);
@@ -195,11 +224,10 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
       const newImages = [];
       for (const file of files) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${isPlans ? 'plan_' : 'prop_'}${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const fileName = `${isPlans ? 'plans/plan_' : 'prop_'}${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
         const { error } = await supabase.storage.from('property-images').upload(fileName, file);
         if (error) throw error;
-        const { data } = supabase.storage.from('property-images').getPublicUrl(fileName);
-        newImages.push(data.publicUrl);
+        newImages.push(fileName);
       }
       setFormData(prev => ({ ...prev, [field]: [...prev[field], ...newImages] }));
     } catch (error) {
@@ -211,7 +239,8 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
 
   const addImageUrl = () => {
     if (imageInput.trim()) {
-      setFormData(prev => ({ ...prev, images: [...prev.images, imageInput.trim()] }));
+      const next = toStoragePath(imageInput);
+      setFormData(prev => ({ ...prev, images: [...prev.images, next] }));
       setImageInput('');
     }
   };
@@ -227,6 +256,8 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
 
     // Auto-generate SEO if empty before validating
     let payload = { ...formData };
+    payload.images = Array.isArray(payload.images) ? payload.images.map(toStoragePath).filter(Boolean) : [];
+    payload.plans_urls = Array.isArray(payload.plans_urls) ? payload.plans_urls.map(toStoragePath).filter(Boolean) : [];
     if (!payload.meta_title || !payload.meta_description) {
         const { title, description } = generateSEOForProperty(payload);
         if (title && description) {
@@ -269,6 +300,7 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
         lat: payload.lat ? parseFloat(payload.lat) : null,
         lng: payload.lng ? parseFloat(payload.lng) : null,
         youtube_url: payload.video_url,
+        plans_urls: payload.plans_urls,
         floor_plans: payload.plans_urls,
         amenities: payload.amenities || [],
         meta_title: payload.meta_title,
@@ -276,19 +308,51 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
       };
 
       if (mode === 'create') {
-        const { error } = await supabase.from('properties').insert([dbPayload]);
+        const { data: insertedRows, error } = await supabase
+          .from('properties')
+          .insert([dbPayload])
+          .select('*');
         if (error) throw error;
+
+        const insertedProperty = Array.isArray(insertedRows) ? insertedRows[0] : insertedRows;
+        if (insertedProperty?.code) {
+          setFormData((prev) => ({ ...prev, code: insertedProperty.code }));
+        }
+
+        toast({ title: "Sucesso!", description: "Imóvel salvo com sucesso.", className: "bg-green-50 border-green-200" });
+        if (onSuccess) onSuccess(insertedProperty || null);
       } else {
-        const { error } = await supabase.from('properties').update(dbPayload).eq('id', initialData.id);
+        const { data: updatedRows, error } = await supabase
+          .from('properties')
+          .update(dbPayload)
+          .eq('id', initialData.id)
+          .select('*');
         if (error) throw error;
+
+        if (Array.isArray(updatedRows) && updatedRows.length === 0) {
+          const { data: verifyRow, error: verifyError } = await supabase
+            .from('properties')
+            .select('id, images, plans_urls, floor_plans')
+            .eq('id', initialData.id)
+            .maybeSingle();
+          if (verifyError) throw verifyError;
+
+          if (!verifyRow) {
+            throw new Error('Nenhuma linha foi atualizada. Possível falta de permissão (RLS) ou imóvel não encontrado.');
+          }
+
+          throw new Error('O Supabase não retornou a linha atualizada. Verifique as políticas (RLS) de UPDATE/SELECT para este imóvel.');
+        }
+
+        const updatedProperty = Array.isArray(updatedRows) ? updatedRows[0] : updatedRows;
+
+        toast({ title: "Sucesso!", description: "Imóvel salvo com sucesso.", className: "bg-green-50 border-green-200" });
+        if (onSuccess) onSuccess(updatedProperty || null);
       }
 
-      toast({ title: "Sucesso!", description: "Imóvel salvo com sucesso.", className: "bg-green-50 border-green-200" });
       if (mode === 'create') {
-          setFormData({ ...formData, title: '', slug: '' });
+        setFormData({ ...formData, title: '', slug: '' });
       }
-      if (onSuccess) onSuccess();
-
     } catch (error) {
       console.error(error);
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
@@ -299,15 +363,14 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-6">
-      
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{mode === 'create' ? 'Novo Imóvel' : 'Editar Imóvel'}</h1>
         <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancelar</Button>
-            <Button type="submit" disabled={loading} className="bg-gray-900 text-white min-w-[140px]">
-                {loading ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 w-4 h-4" />}
-                Salvar Imóvel
-            </Button>
+          <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancelar</Button>
+          <Button type="submit" disabled={loading} className="bg-gray-900 text-white min-w-[140px]">
+            {loading ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 w-4 h-4" />}
+            Salvar Imóvel
+          </Button>
         </div>
       </div>
 
@@ -322,175 +385,176 @@ const PropertyForm = ({ mode = 'create', initialData = null, onSuccess }) => {
         </TabsList>
 
         <div className="mt-6">
-            {/* SECTION 1: BASIC INFO */}
-            <TabsContent value="basic" className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="md:col-span-2">
-                        <Label>Título do Anúncio *</Label>
-                        <input name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required placeholder="Ex: Apartamento de Luxo na Vila Mariana" />
-                        <p className="text-xs text-gray-500 mt-1">Mínimo 10 caracteres.</p>
-                    </div>
-                    
-                    <div className="md:col-span-2">
-                        <Label>Slug (URL) * {slugStatus === 'taken' && <span className="text-red-500 ml-2 text-xs">Indisponível</span>}</Label>
-                        <div className="flex items-center mt-1">
-                            <span className="bg-gray-100 border border-r-0 rounded-l-lg px-3 py-2 text-gray-500 text-sm">/imovel/</span>
-                            <input name="slug" value={formData.slug} onChange={handleChange} className={cn("flex-1 px-4 py-2 border rounded-r-lg", slugStatus === 'taken' ? "border-red-500 bg-red-50" : "")} required />
-                        </div>
-                    </div>
+          <TabsContent value="basic" className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label>Código do Imóvel</Label>
+                <input
+                  name="code"
+                  value={formData.code}
+                  readOnly
+                  className="w-full px-4 py-2 border rounded-lg mt-1 bg-gray-50 text-gray-700"
+                  placeholder="Gerado automaticamente ao salvar"
+                />
+              </div>
 
-                    <div className="md:col-span-2">
-                        <div className="flex justify-end mb-2">
-                          <GenerateDescriptionButton 
-                            propertyData={formData} 
-                            onDescriptionGenerated={handleDescriptionChange} 
-                          />
-                        </div>
-                        <PropertyDescriptionEditor 
-                          value={formData.description}
-                          onChange={handleDescriptionChange}
-                          placeholder="Descreva o imóvel em detalhes... Use títulos e listas para destacar as características."
-                          error={formData.description && formData.description.replace(/<[^>]*>/g, '').trim().length < 50}
-                        />
-                    </div>
+              <div className="md:col-span-2">
+                <Label>Título do Anúncio *</Label>
+                <input name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required placeholder="Ex: Apartamento de Luxo na Vila Mariana" />
+                <p className="text-xs text-gray-500 mt-1">Mínimo 10 caracteres.</p>
+              </div>
 
-                    <div>
-                        <Label>Bairro *</Label>
-                        <input name="neighborhood" value={formData.neighborhood} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required />
-                    </div>
-                    <div>
-                         <Label>Endereço *</Label>
-                         <input name="address" value={formData.address} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required />
-                    </div>
-                    <div>
-                         <Label>Latitude</Label>
-                         <input type="number" step="any" name="lat" value={formData.lat} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" />
-                    </div>
-                    <div>
-                         <Label>Longitude</Label>
-                         <input type="number" step="any" name="lng" value={formData.lng} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" />
-                    </div>
+              <div className="md:col-span-2">
+                <Label>Slug (URL) * {slugStatus === 'taken' && <span className="text-red-500 ml-2 text-xs">Indisponível</span>}</Label>
+                <div className="flex items-center mt-1">
+                  <span className="bg-gray-100 border border-r-0 rounded-l-lg px-3 py-2 text-gray-500 text-sm">/imovel/</span>
+                  <input name="slug" value={formData.slug} onChange={handleChange} className={cn("flex-1 px-4 py-2 border rounded-r-lg", slugStatus === 'taken' ? "border-red-500 bg-red-50" : "")} required />
                 </div>
-            </TabsContent>
+              </div>
 
-            {/* SECTION 2: DETAILS */}
-            <TabsContent value="details" className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-6">
-                    <Label className="mb-3 block font-bold text-gray-900">Tipo de Negócio *</Label>
-                    <RadioGroup value={formData.business_type} onValueChange={handleBusinessTypeChange} className="flex gap-6">
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="sale" id="sale" />
-                            <Label htmlFor="sale">Venda</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="rent" id="rent" />
-                            <Label htmlFor="rent">Locação</Label>
-                        </div>
-                    </RadioGroup>
+              <div className="md:col-span-2">
+                <div className="flex justify-end mb-2">
+                  <GenerateDescriptionButton propertyData={formData} onDescriptionGenerated={handleDescriptionChange} />
                 </div>
+                <PropertyDescriptionEditor
+                  value={formData.description}
+                  onChange={handleDescriptionChange}
+                  placeholder="Descreva o imóvel em detalhes... Use títulos e listas para destacar as características."
+                  error={formData.description && formData.description.replace(/<[^>]*>/g, '').trim().length < 50}
+                />
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {formData.business_type === 'sale' && (
-                        <div>
-                            <Label>Preço de Venda (R$)</Label>
-                            <input type="number" name="price" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" />
-                        </div>
-                    )}
-                    {formData.business_type === 'rent' && (
-                        <div>
-                            <Label>Valor do Aluguel (R$/mês)</Label>
-                            <input type="number" name="rental_price" value={formData.rental_price} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" />
-                        </div>
-                    )}
-                    <div>
-                        <Label className="text-gray-600">Preço "A partir de" (Opcional)</Label>
-                        <input type="number" name="starting_from_price" value={formData.starting_from_price} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1 bg-gray-50" placeholder="Ex: 500000" />
-                        <p className="text-xs text-gray-400 mt-1">Use para lançamentos ou preços base.</p>
-                    </div>
+              <div>
+                <Label>Bairro *</Label>
+                <input name="neighborhood" value={formData.neighborhood} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required />
+              </div>
+              <div>
+                <Label>Endereço *</Label>
+                <input name="address" value={formData.address} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required />
+              </div>
+              <div>
+                <Label>Latitude</Label>
+                <input type="number" step="any" name="lat" value={formData.lat} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" />
+              </div>
+              <div>
+                <Label>Longitude</Label>
+                <input type="number" step="any" name="lng" value={formData.lng} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="details" className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-6">
+              <Label className="mb-3 block font-bold text-gray-900">Tipo de Negócio *</Label>
+              <RadioGroup value={formData.business_type} onValueChange={handleBusinessTypeChange} className="flex gap-6">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="sale" id="sale" />
+                  <Label htmlFor="sale">Venda</Label>
                 </div>
-
-                <div className="h-px bg-gray-100 my-4" />
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div>
-                        <Label>Tipo de Imóvel *</Label>
-                        <select name="type" value={formData.type} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1">
-                            <option value="apartment">Apartamento</option>
-                            <option value="house">Casa</option>
-                            <option value="commercial">Comercial</option>
-                            <option value="land">Terreno</option>
-                        </select>
-                    </div>
-                     <div>
-                        <Label>Estágio</Label>
-                        <select name="property_status" value={formData.property_status} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1">
-                            <option value="ready">Pronto</option>
-                            <option value="construction">Em Obras</option>
-                            <option value="launch">Lançamento</option>
-                        </select>
-                    </div>
-                    <div><Label>Área (m²) *</Label><input type="number" name="area" value={formData.area} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required /></div>
-                    <div><Label>Quartos *</Label><input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required /></div>
-                    <div><Label>Banheiros *</Label><input type="number" name="bathrooms" value={formData.bathrooms} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required /></div>
-                    <div><Label>Suítes</Label><input type="number" name="suites" value={formData.suites} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" /></div>
-                    <div><Label>Vagas</Label><input type="number" name="parking_spaces" value={formData.parking_spaces} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" /></div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="rent" id="rent" />
+                  <Label htmlFor="rent">Locação</Label>
                 </div>
-            </TabsContent>
+              </RadioGroup>
+            </div>
 
-            {/* SECTION 3: MEDIA */}
-            <TabsContent value="media" className="space-y-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                
-                {/* Images */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b pb-2">
-                        <h3 className="font-semibold text-lg">Galeria de Fotos</h3>
-                        <div className="flex gap-2">
-                            <input type="text" value={imageInput} onChange={(e) => setImageInput(e.target.value)} placeholder="URL..." className="px-3 py-1 border rounded text-sm w-40" />
-                            <Button type="button" size="sm" variant="outline" onClick={addImageUrl}>Add URL</Button>
-                        </div>
-                    </div>
-                    <ImageGalleryDragDrop 
-                        images={formData.images} 
-                        onReorder={(imgs) => setFormData(prev => ({ ...prev, images: imgs }))} 
-                        onDelete={(idx) => setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
-                        onUpload={(e) => handleImageUpload(e, 'images')}
-                        uploading={uploadingImages}
-                    />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {formData.business_type === 'sale' && (
+                <div>
+                  <Label>Preço de Venda (R$)</Label>
+                  <input type="number" name="price" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" />
                 </div>
+              )}
+              {formData.business_type === 'rent' && (
+                <div>
+                  <Label>Valor do Aluguel (R$/mês)</Label>
+                  <input type="number" name="rental_price" value={formData.rental_price} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" />
+                </div>
+              )}
+              <div>
+                <Label className="text-gray-600">Preço "A partir de" (Opcional)</Label>
+                <input type="number" name="starting_from_price" value={formData.starting_from_price} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1 bg-gray-50" placeholder="Ex: 500000" />
+                <p className="text-xs text-gray-400 mt-1">Use para lançamentos ou preços base.</p>
+              </div>
+            </div>
 
-                {/* Floor Plans Section */}
-                <div className="space-y-4 pt-6 border-t">
-                    <div className="flex items-center justify-between border-b pb-2">
-                        <div className="flex items-center gap-2">
-                           <FileText className="w-5 h-5 text-blue-600" />
-                           <h3 className="font-semibold text-lg">Plantas Humanizadas</h3>
-                        </div>
-                    </div>
-                    <p className="text-sm text-gray-500 mb-2">
-                      Faça upload das imagens das plantas (JPG/PNG). Arraste para reordenar.
-                    </p>
-                    <ImageGalleryDragDrop 
-                        images={formData.plans_urls} 
-                        onReorder={(plans) => setFormData(prev => ({ ...prev, plans_urls: plans }))} 
-                        onDelete={(idx) => setFormData(prev => ({ ...prev, plans_urls: prev.plans_urls.filter((_, i) => i !== idx) }))}
-                        onUpload={(e) => handleImageUpload(e, 'plans_urls')}
-                        uploading={uploadingPlans}
-                    />
-                </div>
+            <div className="h-px bg-gray-100 my-4" />
 
-                {/* Video & Tour */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
-                    <div>
-                        <Label>URL do Vídeo (YouTube)</Label>
-                        <input name="video_url" value={formData.video_url} onChange={handleChange} placeholder="https://youtube.com/watch?v=..." className="w-full px-4 py-2 border rounded-lg mt-1" />
-                        <p className="text-xs text-gray-500 mt-1">Insira o link completo do YouTube.</p>
-                    </div>
-                    <div>
-                        <Label>URL do Tour Virtual (Matterport/Outros)</Label>
-                        <input name="virtual_tour_url" value={formData.virtual_tour_url} onChange={handleChange} placeholder="https://my.matterport.com/..." className="w-full px-4 py-2 border rounded-lg mt-1" />
-                    </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div>
+                <Label>Tipo de Imóvel *</Label>
+                <select name="type" value={formData.type} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1">
+                  <option value="apartment">Apartamento</option>
+                  <option value="house">Casa</option>
+                  <option value="commercial">Comercial</option>
+                  <option value="land">Terreno</option>
+                </select>
+              </div>
+              <div>
+                <Label>Estágio</Label>
+                <select name="property_status" value={formData.property_status} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1">
+                  <option value="ready">Pronto</option>
+                  <option value="construction">Em Obras</option>
+                  <option value="launch">Lançamento</option>
+                </select>
+              </div>
+              <div><Label>Área (m²) *</Label><input type="number" name="area" value={formData.area} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required /></div>
+              <div><Label>Quartos *</Label><input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required /></div>
+              <div><Label>Banheiros *</Label><input type="number" name="bathrooms" value={formData.bathrooms} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" required /></div>
+              <div><Label>Suítes</Label><input type="number" name="suites" value={formData.suites} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" /></div>
+              <div><Label>Vagas</Label><input type="number" name="parking_spaces" value={formData.parking_spaces} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg mt-1" /></div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h3 className="font-semibold text-lg">Galeria de Fotos</h3>
+                <div className="flex gap-2">
+                  <input type="text" value={imageInput} onChange={(e) => setImageInput(e.target.value)} placeholder="URL..." className="px-3 py-1 border rounded text-sm w-40" />
+                  <Button type="button" size="sm" variant="outline" onClick={addImageUrl}>Add URL</Button>
                 </div>
-            </TabsContent>
+              </div>
+              <ImageGalleryDragDrop
+                images={formData.images}
+                onReorder={(imgs) => setFormData(prev => ({ ...prev, images: imgs }))}
+                onDelete={(idx) => setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
+                onUpload={(e) => handleImageUpload(e, 'images')}
+                uploading={uploadingImages}
+              />
+            </div>
+
+            <div className="space-y-4 pt-6 border-t">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-semibold text-lg">Plantas Humanizadas</h3>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 mb-2">
+                Faça upload das imagens das plantas (JPG/PNG). Arraste para reordenar.
+              </p>
+              <ImageGalleryDragDrop
+                images={formData.plans_urls}
+                onReorder={(plans) => setFormData(prev => ({ ...prev, plans_urls: plans }))}
+                onDelete={(idx) => setFormData(prev => ({ ...prev, plans_urls: prev.plans_urls.filter((_, i) => i !== idx) }))}
+                onUpload={(e) => handleImageUpload(e, 'plans_urls')}
+                uploading={uploadingPlans}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
+              <div>
+                <Label>URL do Vídeo (YouTube)</Label>
+                <input name="video_url" value={formData.video_url} onChange={handleChange} placeholder="https://youtube.com/watch?v=..." className="w-full px-4 py-2 border rounded-lg mt-1" />
+                <p className="text-xs text-gray-500 mt-1">Insira o link completo do YouTube.</p>
+              </div>
+              <div>
+                <Label>URL do Tour Virtual (Matterport/Outros)</Label>
+                <input name="virtual_tour_url" value={formData.virtual_tour_url} onChange={handleChange} placeholder="https://my.matterport.com/..." className="w-full px-4 py-2 border rounded-lg mt-1" />
+              </div>
+            </div>
+          </TabsContent>
 
             {/* SECTION 4: INFRASTRUCTURE */}
             <TabsContent value="infra" className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">

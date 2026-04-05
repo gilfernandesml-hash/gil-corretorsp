@@ -59,6 +59,8 @@ const PropertyDetailPage = () => {
   const displayPrice = property.starting_from_price || (isRent ? property.rental_price : property.price) || 0;
   const formattedPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayPrice);
 
+  const floorPlans = (property.floor_plans?.length ? property.floor_plans : property.plans_urls) || [];
+
   const handlePhoneAction = () => {
     trackPhoneClick({
       property_slug: property.slug
@@ -113,7 +115,7 @@ const PropertyDetailPage = () => {
                   <Info icon={Bath} value={property.bathrooms} label="Banheiros" />
                   <Info icon={Car} value={property.parking_spaces} label="Vagas" />
                   <Info icon={Maximize} value={`${property.area} m²`} label="Área" />
-                  {property.floor_plans?.length > 0 && (
+                  {floorPlans.length > 0 && (
                     <Button variant="outline" size="sm" onClick={() => setIsFloorPlanModalOpen(true)} className="h-[38px]">
                       <FileText className="w-4 h-4 mr-2" /> Plantas
                     </Button>
@@ -125,7 +127,7 @@ const PropertyDetailPage = () => {
                  <PhotoCarousel 
                    images={property.images} 
                    onPhotoClick={(i) => { setPhotoModalIndex(i); setIsPhotoModalOpen(true); }}
-                   hasFloorPlans={property.floor_plans?.length > 0}
+                   hasFloorPlans={floorPlans.length > 0}
                    onFloorPlansClick={() => setIsFloorPlanModalOpen(true)}
                  />
               </Suspense>
@@ -201,7 +203,7 @@ const PropertyDetailPage = () => {
 
         <Suspense fallback={null}>
           {isPhotoModalOpen && <PhotoModal isOpen={isPhotoModalOpen} images={property.images} initialIndex={photoModalIndex} onClose={() => setIsPhotoModalOpen(false)} />}
-          {isFloorPlanModalOpen && <FloorPlansModal isOpen={isFloorPlanModalOpen} plans={property.floor_plans} onClose={() => setIsFloorPlanModalOpen(false)} />}
+          {isFloorPlanModalOpen && <FloorPlansModal isOpen={isFloorPlanModalOpen} plans={floorPlans} onClose={() => setIsFloorPlanModalOpen(false)} />}
           {isMapOpen && <PropertyMapModal isOpen={isMapOpen} property={property} onClose={() => setIsMapOpen(false)} />}
         </Suspense>
       </div>

@@ -41,6 +41,7 @@ const HomePage = () => {
   const [searchType, setSearchType] = useState('sale');
   const [propertyType, setPropertyType] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
+  const [queryText, setQueryText] = useState('');
   
   const navigate = useNavigate();
 
@@ -69,6 +70,7 @@ const HomePage = () => {
     if (searchType) params.append('businessType', searchType);
     if (propertyType) params.append('type', propertyType);
     if (neighborhood) params.append('location', neighborhood);
+    if (queryText) params.append('q', queryText);
     navigate(`/imoveis?${params.toString()}`);
   };
 
@@ -191,7 +193,7 @@ const HomePage = () => {
 
             {/* SEARCH BOX */}
             <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 max-w-4xl mx-auto border border-white/40">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <select value={searchType} onChange={e => setSearchType(e.target.value)} className="w-full bg-white/90 border border-gray-200 rounded-lg px-4 py-3 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0d5a7a]/30 focus:border-[#0d5a7a] transition-all">
                   <option value="sale">Comprar</option>
                   <option value="rent">Alugar</option>
@@ -208,6 +210,16 @@ const HomePage = () => {
                   placeholder="Bairro (ex: Pinheiros)" 
                   className="w-full bg-white/90 border border-gray-200 rounded-lg px-4 py-3 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0d5a7a]/30 focus:border-[#0d5a7a] transition-all" 
                 />
+
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    value={queryText}
+                    onChange={e => setQueryText(e.target.value)}
+                    placeholder="Lançamento ou código"
+                    className="w-full pl-9 bg-white/90 border border-gray-200 rounded-lg px-4 py-3 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0d5a7a]/30 focus:border-[#0d5a7a] transition-all"
+                  />
+                </div>
               </div>
               <Button onClick={handleSearch} className="w-full mt-6 bg-[#0d5a7a] hover:bg-[#0b4a65] text-white py-5 text-lg font-semibold rounded-xl shadow-md transition-all duration-300 hover:shadow-lg hover:scale-[1.01]">
                 <Search className="mr-2" /> Buscar Imóveis

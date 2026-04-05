@@ -18,6 +18,7 @@ const SearchPage = () => {
   const [searchType, setSearchType] = useState(searchParams.get('searchType') || 'sale');
   const [propertyType, setPropertyType] = useState(searchParams.get('type') || '');
   const [neighborhood, setNeighborhood] = useState(searchParams.get('neighborhood') || '');
+  const [queryText, setQueryText] = useState(searchParams.get('q') || '');
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
   const [bedrooms, setBedrooms] = useState('');
@@ -42,6 +43,18 @@ const SearchPage = () => {
 
       if (propertyType) query.eq('type', propertyType);
       if (neighborhood) query.ilike('neighborhood', `%${neighborhood}%`);
+
+      const trimmedQ = (queryText || '').trim();
+      if (trimmedQ) {
+        const normalized = trimmedQ.toUpperCase();
+        const isExactCode = /^IMV-\d{6}$/.test(normalized);
+        if (isExactCode) {
+          query = query.eq('code', normalized);
+        } else {
+          const escaped = trimmedQ.replace(/,/g, ' ');
+          query = query.or(`title.ilike.%${escaped}%,code.ilike.%${escaped}%`);
+        }
+      }
       
       // Price logic depends on business type
       if (searchType === 'sale') {
@@ -82,6 +95,7 @@ const SearchPage = () => {
     if (searchType) params.append('searchType', searchType);
     if (propertyType) params.append('type', propertyType);
     if (neighborhood) params.append('neighborhood', neighborhood);
+    if ((queryText || '').trim()) params.append('q', queryText.trim());
     if (minPrice) params.append('minPrice', minPrice);
     if (maxPrice) params.append('maxPrice', maxPrice);
 
@@ -93,6 +107,7 @@ const SearchPage = () => {
     setSearchType('sale');
     setPropertyType('');
     setNeighborhood('');
+    setQueryText('');
     setMinPrice('');
     setMaxPrice('');
     setBedrooms('');
@@ -133,6 +148,10 @@ const SearchPage = () => {
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-white rounded-xl shadow-md p-6 mb-8">
               <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-bold text-[#1a3a52]">Filtros Avançados</h2><Button variant="ghost" size="icon" onClick={() => setShowFilters(false)}><X className="w-5 h-5" /></Button></div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Buscar (Código ou Lançamento)</label>
+                  <input type="text" value={queryText} onChange={(e) => setQueryText(e.target.value)} className="w-full px-4 py-2 border rounded-lg" placeholder="Ex: IMV-XXXX ou nome" />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Negócio</label>
                   <select value={searchType} onChange={(e) => setSearchType(e.target.value)} className="w-full px-4 py-2 border rounded-lg">

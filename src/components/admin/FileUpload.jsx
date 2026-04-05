@@ -67,6 +67,7 @@ const FileUpload = ({
           name: file.name,
           size: file.size,
           type: file.type,
+          path: fileName,
           url: publicUrl,
           uploadedAt: new Date().toISOString()
         });

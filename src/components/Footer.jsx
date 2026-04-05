@@ -18,10 +18,10 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div>
             <div className="flex items-center gap-2">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow overflow-hidden bg-[#d9ecff] ring-1 ring-white/10 p-1">
+              <div className="logo w-24 h-20 flex items-center justify-center overflow-hidden">
                 {isLogoLoaded ? (
                   <img
-                    src="/logo-gil-corretor-sp.png"
+                    src="/logo-orange.svg"
                     alt="Gil Corretor SP"
                     className="w-full h-full object-contain"
                     loading="lazy"

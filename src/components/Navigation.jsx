@@ -62,7 +62,7 @@ const Navigation = () => {
             <div className="logo h-[88px] h-[88px] flex items-center justify-center transition-all duration-300 transform group-hover:rotate-3">
               {isLogoLoaded ? (
                 <img
-                  src="/logo-gil-corretor-sp.png"
+                  src="/logo-gil-corretor-sp.svg"
                   alt="Gil Corretor SP"
                   className="w-full h-full object-contain"
                   loading="eager"

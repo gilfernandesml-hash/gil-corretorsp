@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/lib/supabase';
 
 // Helper to determine if we can optimize this URL (e.g., Unsplash)
 const getOptimizedUrl = (url, width, format = 'webp', quality = 75) => {
@@ -19,6 +20,8 @@ const ImageOptimizer = ({
   className,
   width,
   height,
+  onLoad,
+  onError,
   priority = false, // If true, eager load (LCP candidate)
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
   objectFit = "cover"
@@ -27,6 +30,22 @@ const ImageOptimizer = ({
   const [isVisible, setIsVisible] = useState(priority);
   const imgRef = useRef(null);
   const containerRef = useRef(null);
+
+  const toPublicUrlIfNeeded = (value) => {
+    if (typeof value !== 'string') return '';
+    const v = value.trim();
+    if (!v) return '';
+    if (/^(https?:)?\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
+
+    const encodedPath = v
+      .replace(/^\/+/, '')
+      .split('/')
+      .map((seg) => encodeURIComponent(seg))
+      .join('/');
+
+    const publicUrl = supabase?.storage?.from?.('property-images')?.getPublicUrl?.(encodedPath)?.data?.publicUrl;
+    return publicUrl || v;
+  };
 
   useEffect(() => {
     if (priority) return;
@@ -49,7 +68,22 @@ const ImageOptimizer = ({
     return () => observer.disconnect();
   }, [priority]);
 
-  const originalSrc = src || 'https://via.placeholder.com/800x600?text=No+Image';
+  const fallbackSrc = '/sem-foto.svg';
+  const finalFallbackSrc = 'https://via.placeholder.com/800x600?text=No+Image';
+  const coerceSrc = (v) => {
+    const normalized = toPublicUrlIfNeeded(v);
+    return typeof normalized === 'string' && normalized.trim() ? normalized.trim() : fallbackSrc;
+  };
+  const [currentSrc, setCurrentSrc] = useState(coerceSrc(src));
+
+  useEffect(() => {
+    setIsLoaded(false);
+    setCurrentSrc(coerceSrc(src));
+  }, [src]);
+
+  const originalSrc = currentSrc;
+
+  const canOptimizeFormats = originalSrc.includes('images.unsplash.com');
 
   // Generate responsive srcsets for AVIF (best compression), WebP (great support), JPG (fallback)
   const formats = ['avif', 'webp', 'jpg'];
@@ -73,27 +107,70 @@ const ImageOptimizer = ({
       }}
     >
       {(isVisible || priority) && (
-        <picture>
-          <source type="image/avif" srcSet={generateSrcSet('avif')} sizes={sizes} />
-          <source type="image/webp" srcSet={generateSrcSet('webp')} sizes={sizes} />
-          <source type="image/jpeg" srcSet={generateSrcSet('jpg')} sizes={sizes} />
+        canOptimizeFormats ? (
+          <picture>
+            <source type="image/avif" srcSet={generateSrcSet('avif')} sizes={sizes} />
+            <source type="image/webp" srcSet={generateSrcSet('webp')} sizes={sizes} />
+            <source type="image/jpeg" srcSet={generateSrcSet('jpg')} sizes={sizes} />
+            <img
+              ref={imgRef}
+              src={defaultSrc}
+              alt={alt || "Imagem do imóvel"}
+              width={width}
+              height={height}
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={priority ? "high" : "auto"}
+              onLoad={(e) => {
+                setIsLoaded(true);
+                onLoad && onLoad(e);
+              }}
+              onError={(e) => {
+                setIsLoaded(true);
+                onError && onError(e);
+                if (currentSrc !== fallbackSrc && currentSrc !== finalFallbackSrc) {
+                  setCurrentSrc(fallbackSrc);
+                  return;
+                }
+                if (currentSrc === fallbackSrc) setCurrentSrc(finalFallbackSrc);
+              }}
+              className={cn(
+                "w-full h-full transition-all duration-700",
+                objectFit === "contain" ? "object-contain" : "object-cover",
+                !isLoaded && !priority ? "blur-sm scale-105 opacity-0" : "blur-0 scale-100 opacity-100"
+              )}
+            />
+          </picture>
+        ) : (
           <img
             ref={imgRef}
-            src={defaultSrc}
+            src={originalSrc}
             alt={alt || "Imagem do imóvel"}
             width={width}
             height={height}
             loading={priority ? "eager" : "lazy"}
             decoding="async"
             fetchPriority={priority ? "high" : "auto"}
-            onLoad={() => setIsLoaded(true)}
+            onLoad={(e) => {
+              setIsLoaded(true);
+              onLoad && onLoad(e);
+            }}
+            onError={(e) => {
+              setIsLoaded(true);
+              onError && onError(e);
+              if (currentSrc !== fallbackSrc && currentSrc !== finalFallbackSrc) {
+                setCurrentSrc(fallbackSrc);
+                return;
+              }
+              if (currentSrc === fallbackSrc) setCurrentSrc(finalFallbackSrc);
+            }}
             className={cn(
               "w-full h-full transition-all duration-700",
               objectFit === "contain" ? "object-contain" : "object-cover",
               !isLoaded && !priority ? "blur-sm scale-105 opacity-0" : "blur-0 scale-100 opacity-100"
             )}
           />
-        </picture>
+        )
       )}
       
       {!isLoaded && (

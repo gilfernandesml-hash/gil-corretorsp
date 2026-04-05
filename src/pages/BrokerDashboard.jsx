@@ -162,9 +162,17 @@ const BrokerDashboard = () => {
     }
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (updatedProperty) => {
     setViewState('list');
     setEditProperty(null);
+
+    if (updatedProperty?.id) {
+      setProperties((prev) =>
+        Array.isArray(prev)
+          ? prev.map((p) => (p.id === updatedProperty.id ? updatedProperty : p))
+          : prev
+      );
+    }
     if (currentBroker?.id) {
       fetchProperties(currentBroker.id);
     }

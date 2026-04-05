@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Filter, LayoutGrid, LayoutList, Check, Building2, Key, Loader2, Map as MapIcon } from 'lucide-react';
+import { Filter, LayoutGrid, LayoutList, Check, Building2, Key, Loader2, Map as MapIcon, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -26,11 +26,74 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
+const toSupabasePublicImageUrl = (raw) => {
+  if (typeof raw !== 'string') return '';
+  const url = raw
+    .trim()
+    .replace(/^["']+/, '')
+    .replace(/["']+$/, '')
+    .replace(/,+$/, '')
+    .trim();
+  if (!url) return '';
+
+  if (/^(https?:)?\/\//i.test(url) || url.startsWith('data:')) {
+    return url.includes(' ') ? url.replace(/ /g, '%20') : url;
+  }
+
+  // Convert relative/path formats to the public bucket URL using the configured Supabase client
+  let path = url.replace(/^\/+/, '');
+  path = path.replace(/^property-images\//, '');
+  path = path.replace(/^storage\/v1\/object\/public\/property-images\//, '');
+  path = path.replace(/^storage\/v1\/object\/public\//, '');
+  path = path.replace(/^property-images\//, '');
+
+  const encodedPath = path
+    .split('/')
+    .map((seg) => encodeURIComponent(seg))
+    .join('/');
+
+  const publicUrl = supabase?.storage?.from?.('property-images')?.getPublicUrl?.(encodedPath)?.data?.publicUrl;
+  return publicUrl || url;
+};
+
+const normalizeUrlArray = (value) => {
+  if (!value) return [];
+
+  let arr = value;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      arr = parsed;
+    } catch {
+      arr = trimmed
+        .split(/\s*[|,]\s*/)
+        .map((u) => u.trim())
+        .filter(Boolean);
+    }
+  }
+
+  if (!Array.isArray(arr)) return [];
+
+  return arr
+    .map((item) => {
+      if (!item) return null;
+      if (typeof item === 'string') return toSupabasePublicImageUrl(item);
+      if (typeof item === 'object') return toSupabasePublicImageUrl(item.url || item.publicUrl || item.public_url || '');
+      return null;
+    })
+    .filter(Boolean);
+};
+
 const PropertyListPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
   const [businessTypeFilter, setBusinessTypeFilter] = useState(searchParams.get('businessType') || 'all');
+  const [queryText, setQueryText] = useState(searchParams.get('q') || '');
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('list');
@@ -68,13 +131,17 @@ const PropertyListPage = () => {
     
     if (filters.type !== 'all') params.set('type', filters.type);
     if (filters.location !== 'all') params.set('location', filters.location);
+
+    const trimmedQ = (queryText || '').trim();
+    if (trimmedQ) params.set('q', trimmedQ);
+    else params.delete('q');
     
     setSearchParams(params, { replace: true });
     
     // Reset fetch/visible count when main filters change
     setVisibleCount(12);
     fetchProperties();
-  }, [businessTypeFilter, filters.type, filters.location]);
+  }, [businessTypeFilter, filters.type, filters.location, queryText]);
 
   const fetchProperties = async () => {
     try {
@@ -88,9 +155,28 @@ const PropertyListPage = () => {
         query = query.eq('business_type', businessTypeFilter);
       }
 
+      const trimmedQ = (queryText || '').trim();
+      if (trimmedQ) {
+        const normalized = trimmedQ.toUpperCase();
+        const isExactCode = /^IMV-\d{6}$/.test(normalized);
+        if (isExactCode) {
+          query = query.eq('code', normalized);
+        } else {
+          const escaped = trimmedQ.replace(/,/g, ' ');
+          query = query.or(`title.ilike.%${escaped}%,code.ilike.%${escaped}%`);
+        }
+      }
+
       const { data, error } = await query;
       if (error) throw error;
-      setProperties(data || []);
+      const normalized = (data || []).map((p) => ({
+        ...p,
+        images: normalizeUrlArray(p.images),
+        plans_urls: normalizeUrlArray(p.plans_urls),
+        floor_plans: normalizeUrlArray(p.floor_plans)
+      }));
+
+      setProperties(normalized);
     } catch (error) {
       console.error(error);
       toast({ title: 'Erro ao carregar', description: 'Tente novamente.', variant: 'destructive' });
@@ -113,7 +199,12 @@ const PropertyListPage = () => {
     const matchesStatus = filters.status === 'all' || property.property_status === filters.status;
     const matchesLocation = filters.location === 'all' || propNeighborhood.includes(filterLoc);
 
-    return matchesType && matchesPrice && matchesStatus && matchesLocation;
+    const q = normalizeString(queryText);
+    const title = normalizeString(property.title);
+    const code = normalizeString(property.code);
+    const matchesQuery = !q || title.includes(q) || code.includes(q);
+
+    return matchesType && matchesPrice && matchesStatus && matchesLocation && matchesQuery;
   });
 
   const uniqueLocations = [...new Set(properties.map(p => p.neighborhood).filter(Boolean))];
@@ -189,7 +280,19 @@ const PropertyListPage = () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    className="input-field w-full pl-9"
+                    value={queryText}
+                    onChange={(e) => setQueryText(e.target.value)}
+                    placeholder="Código ou nome do lançamento"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
                 <select className="input-field w-full" value={filters.type} onChange={e => setFilters(prev => ({ ...prev, type: e.target.value }))}>

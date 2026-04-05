@@ -60,6 +60,7 @@ const PropertyCard = ({ property, index = 0, layout = 'grid' }) => {
   };
 
   const statusInfo = getStatusInfo(property.property_status);
+  const codeLabel = (property?.code || '').trim();
 
   const handleImageClick = () => {
     navigate(`/imovel/${property.slug}`);
@@ -118,6 +119,13 @@ const PropertyCard = ({ property, index = 0, layout = 'grid' }) => {
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">
                     {property.type === 'apartment' ? 'Apartamento' : property.type === 'house' ? 'Casa' : 'Comercial'}
                     </span>
+
+                    {codeLabel && (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 border border-gray-200 px-2 py-0.5 text-[11px] font-semibold text-gray-700 align-middle">
+                        {codeLabel}
+                      </span>
+                    )}
+
                     <Link to={`/imovel/${property.slug}`} className="block group-hover:text-blue-600 transition-colors">
                         <h3 className="text-xl font-bold text-gray-900 line-clamp-1 mt-1">
                             {property.title}
@@ -206,6 +214,14 @@ const PropertyCard = ({ property, index = 0, layout = 'grid' }) => {
                 <div className="bg-red-600 p-1.5 rounded-full text-white shadow-md"><Video className="w-4 h-4" /></div>
             )}
         </div>
+
+        {codeLabel && (
+          <div className="absolute bottom-4 right-4 pointer-events-none">
+            <div className="bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-bold px-3 py-1 rounded-full shadow-md border border-white/40">
+              {codeLabel}
+            </div>
+          </div>
+        )}
         
         <div className="absolute bottom-4 left-0 right-0 px-4">
              <div className="text-white font-bold text-lg drop-shadow-md truncate">{property.title}</div>

@@ -70,7 +70,8 @@ const PropertyMapPage = () => {
     const matchesPrice = safePrice >= filters.priceRange[0] && safePrice <= filters.priceRange[1];
     const matchesSearch = filters.search === '' || 
       property.title.toLowerCase().includes(filters.search.toLowerCase()) || 
-      property.neighborhood.toLowerCase().includes(filters.search.toLowerCase());
+      property.neighborhood.toLowerCase().includes(filters.search.toLowerCase()) ||
+      (property.code || '').toLowerCase().includes(filters.search.toLowerCase());
     
     return matchesBusinessType && matchesType && matchesPrice && matchesSearch;
   });

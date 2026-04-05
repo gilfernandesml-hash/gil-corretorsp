@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Upload, Loader2, GripVertical, Trash2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 const ImageGalleryDragDrop = ({ 
   images = [], 
@@ -61,6 +62,22 @@ const ImageGalleryDragDrop = ({
     fileInputRef.current?.click();
   };
 
+  const toPreviewUrl = (value) => {
+    if (typeof value !== 'string') return '';
+    const v = value.trim();
+    if (!v) return '';
+    if (/^(https?:)?\/\//i.test(v) || v.startsWith('data:')) return v;
+
+    const encodedPath = v
+      .replace(/^\/+/, '')
+      .split('/')
+      .map((seg) => encodeURIComponent(seg))
+      .join('/');
+
+    const publicUrl = supabase?.storage?.from?.('property-images')?.getPublicUrl?.(encodedPath)?.data?.publicUrl;
+    return publicUrl || '';
+  };
+
   return (
     <div className="space-y-6">
        {/* Upload Button Section */}
@@ -107,7 +124,7 @@ const ImageGalleryDragDrop = ({
                )}
              >
                <img
-                src={img}
+                src={toPreviewUrl(img)}
                 alt={`Property ${index + 1}`}
                 loading="lazy"
                 decoding="async"

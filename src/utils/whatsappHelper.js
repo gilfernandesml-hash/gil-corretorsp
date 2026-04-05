@@ -11,9 +11,10 @@ export const formatWhatsAppMessage = (property) => {
   const typeLabel = isRent ? 'LOCAÇÃO' : 'VENDA';
   const priceVal = isRent ? property.rental_price : property.price;
   const priceFormatted = formatPrice(priceVal, isRent);
-  const url = `${window.location.origin}/imovel/${property.slug}`;
+  const url = property?.slug ? `${window.location.origin}/imovel/${property.slug}` : window.location.origin;
+  const codePart = property?.code ? ` Código: ${property.code}.` : '';
 
-  return `Olá! Tenho interesse no imóvel ${property.title} (${property.neighborhood}) - ${typeLabel} - ${priceFormatted}. Link: ${url}`;
+  return `Olá! Tenho interesse no imóvel ${property.title} (${property.neighborhood}) - ${typeLabel} - ${priceFormatted}.${codePart} Link: ${url}`;
 };
 
 export const generateWhatsAppLink = (property, businessPhone = '5511971157373') => {
