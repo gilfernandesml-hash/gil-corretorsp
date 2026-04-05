@@ -73,6 +73,7 @@ function App() {
               <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard initialTab="properties" /></ProtectedRoute>} />
               <Route path="/admin/seo-management" element={<ProtectedRoute><AdminDashboard initialTab="seo" /></ProtectedRoute>} />
               <Route path="/admin/leads" element={<ProtectedRoute><AdminDashboard initialTab="leads" /></ProtectedRoute>} />
+              <Route path="/admin/banners" element={<ProtectedRoute><AdminDashboard initialTab="banners" /></ProtectedRoute>} />
               
               <Route path="/404" element={<NotFoundPage />} />
               <Route path="*" element={<Navigate to="/404" replace />} />

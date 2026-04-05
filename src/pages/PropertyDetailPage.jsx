@@ -2,12 +2,12 @@ import React, { useState, useMemo, Suspense, lazy, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Bed, Bath, Car, Maximize, MapPin, ArrowLeft, Loader2, Map as MapIcon, Video, Rotate3D, Phone, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import PropertyDescription from '@/components/PropertyDescription';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import PromoBanner from '@/components/PromoBanner';
 import Seo from '@/components/Seo';
 import useProperty from '@/hooks/useProperty';
+import usePromoBanners from '@/hooks/usePromoBanners';
 import { cn } from '@/lib/utils';
 import { generatePropertyTitle, generatePropertyDescription } from '@/utils/seoHelpers';
 import { generatePropertySchema } from '@/utils/generatePropertySchema';
@@ -25,6 +25,11 @@ const VirtualTourEmbed = lazy(() => import('@/components/property/VirtualTourEmb
 const PropertyDetailPage = () => {
   const { slug } = useParams();
   const { property, loading, error } = useProperty(slug);
+  const {
+    banners: promoBannersRaw,
+    loading: promoBannersLoading,
+    error: promoBannersError,
+  } = usePromoBanners();
 
   const [photoModalIndex, setPhotoModalIndex] = useState(0);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
@@ -34,13 +39,27 @@ const PropertyDetailPage = () => {
   const [showVideo, setShowVideo] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
-  const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
-
   const isRent = useMemo(() => property?.business_type === 'rent', [property]);
   
   const seoTitle = useMemo(() => property?.meta_title || generatePropertyTitle(property), [property]);
   const seoDesc = useMemo(() => property?.meta_description || generatePropertyDescription(property), [property]);
   const schema = useMemo(() => generatePropertySchema(property), [property]);
+
+  const promoBanners = useMemo(() => {
+    if (!Array.isArray(promoBannersRaw) || promoBannersRaw.length === 0) return [];
+
+    return promoBannersRaw
+      .filter(Boolean)
+      .map((b) => ({
+        image: b.image_url || '',
+        title: b.title || '',
+        subtitle: b.subtitle || '',
+        price: b.price || '',
+        ctaText: b.cta_text || 'Quero saber mais',
+        link: b.link || '',
+      }))
+      .filter((b) => b.image && b.link);
+  }, [promoBannersRaw]);
 
   useEffect(() => {
     if (property) {
@@ -186,16 +205,23 @@ const PropertyDetailPage = () => {
                   </a>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                   <h3 className="font-bold mb-4">Tenho Interesse</h3>
-                   <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); alert('Mensagem enviada! Entraremos em contato em breve.'); }}>
-                      <Input placeholder="Nome" value={contactForm.name} onChange={e => setContactForm({...contactForm, name: e.target.value})} />
-                      <Input placeholder="Email" value={contactForm.email} onChange={e => setContactForm({...contactForm, email: e.target.value})} />
-                      <Input placeholder="Telefone" value={contactForm.phone} onChange={e => setContactForm({...contactForm, phone: e.target.value})} />
-                      <Textarea placeholder="Mensagem" value={contactForm.message} onChange={e => setContactForm({...contactForm, message: e.target.value})} />
-                      <Button type="submit" className="w-full bg-[#0d5a7a] text-white hover:bg-[#0b4a65]">Enviar Mensagem</Button>
-                   </form>
-                </div>
+                <PromoBanner
+                  items={promoBanners}
+                  autoplayMs={5000}
+                  imageFit="contain"
+                  aspectClassName="aspect-[9/16] lg:aspect-[9/16] min-h-[520px] lg:min-h-[620px]"
+                />
+
+                {import.meta.env.DEV && (promoBannersLoading || promoBannersError || promoBanners.length === 0) && (
+                  <div className="rounded-lg border border-dashed border-gray-300 bg-white p-3 text-xs text-gray-700">
+                    <div className="font-semibold">Debug PromoBanners</div>
+                    <div>loading: {String(!!promoBannersLoading)}</div>
+                    <div>items: {String(promoBannersRaw?.length || 0)} (raw) / {String(promoBanners.length)} (render)</div>
+                    {promoBannersError?.message ? <div>error: {promoBannersError.message}</div> : null}
+                    {promoBannersError?.code ? <div>code: {promoBannersError.code}</div> : null}
+                    {promoBannersError?.status ? <div>status: {promoBannersError.status}</div> : null}
+                  </div>
+                )}
               </div>
             </div>
           </div>

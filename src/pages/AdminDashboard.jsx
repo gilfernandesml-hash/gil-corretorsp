@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, PlusCircle, Settings, Layout, Upload, Search, Database, Trash2, Loader2 } from 'lucide-react';
+import { Building2, PlusCircle, Settings, Layout, Upload, Search, Database, Trash2, Loader2, Image as ImageIcon } from 'lucide-react';
 import PropertyManagement from '@/components/admin/PropertyManagement';
 import PropertyForm from '@/components/admin/PropertyForm';
 import SiteSettings from '@/components/admin/SiteSettings';
@@ -12,6 +12,7 @@ import SEOStatusDashboard from '@/components/admin/SEOStatusDashboard';
 import SEOMigrationScript from '@/components/admin/SEOMigrationScript';
 import DataExportSection from '@/components/admin/DataExportSection';
 import LeadsManagement from '@/components/admin/LeadsManagement';
+import PromoBannersManagement from '@/components/admin/PromoBannersManagement';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
@@ -142,6 +143,13 @@ const AdminDashboard = ({ initialTab = "properties" }) => {
                   </TabsTrigger>
 
                   <TabsTrigger 
+                    value="banners" 
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1a3a52] px-6 py-3 rounded-lg text-gray-600 font-medium transition-all whitespace-nowrap"
+                  >
+                    <ImageIcon className="w-4 h-4 mr-2" /> Oportunidades
+                  </TabsTrigger>
+
+                  <TabsTrigger 
                     value="leads" 
                     className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1a3a52] px-6 py-3 rounded-lg text-gray-600 font-medium transition-all whitespace-nowrap"
                   >
@@ -189,6 +197,10 @@ const AdminDashboard = ({ initialTab = "properties" }) => {
                 
                 <TabsContent value="export" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
                   <DataExportSection />
+                </TabsContent>
+
+                <TabsContent value="banners" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                  <PromoBannersManagement />
                 </TabsContent>
 
                 <TabsContent value="leads" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
