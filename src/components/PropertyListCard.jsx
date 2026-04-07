@@ -121,7 +121,7 @@ const PropertyListCard = ({ property, index = 0 }) => {
 
           {/* Price */}
           <div className="mb-3">
-            <span className={cn("text-2xl font-extrabold", isRent ? "text-orange-600" : "text-[#1a3a52]")}>
+            <span className={cn("text-2xl font-extrabold", "text-orange-700")}>
               {formattedPrice}
             </span>
           </div>

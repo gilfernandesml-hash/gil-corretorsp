@@ -77,9 +77,11 @@ const ImageOptimizer = ({
   const [currentSrc, setCurrentSrc] = useState(coerceSrc(src));
 
   useEffect(() => {
+    const nextSrc = coerceSrc(src);
+    if (nextSrc === currentSrc) return;
     setIsLoaded(false);
-    setCurrentSrc(coerceSrc(src));
-  }, [src]);
+    setCurrentSrc(nextSrc);
+  }, [src, currentSrc]);
 
   const originalSrc = currentSrc;
 

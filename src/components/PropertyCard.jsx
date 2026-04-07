@@ -135,7 +135,7 @@ const PropertyCard = ({ property, index = 0, layout = 'grid' }) => {
 
                 <div className="mb-3">
                     {showStartingFrom && <span className="text-xs text-gray-500 uppercase block">A partir de</span>}
-                    <span className={cn("text-2xl font-extrabold", isRent ? "text-orange-600" : "text-gray-900")}>
+                    <span className={cn("text-2xl font-extrabold", "text-orange-700")}>
                         {formattedPrice}
                     </span>
                 </div>
@@ -236,7 +236,7 @@ const PropertyCard = ({ property, index = 0, layout = 'grid' }) => {
           <p className="text-xs text-gray-500 uppercase font-medium">
             {showStartingFrom ? 'A partir de' : (isRent ? 'Valor Mensal' : 'Valor de Venda')}
           </p>
-          <p className="text-xl font-extrabold text-gray-900 whitespace-nowrap">
+          <p className="text-xl font-extrabold text-orange-700 whitespace-nowrap">
             {formattedPrice}
           </p>
         </div>
