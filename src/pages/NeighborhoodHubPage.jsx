@@ -56,7 +56,7 @@ const NeighborhoodHubPage = () => {
       />
 
       <main className="min-h-screen bg-[#f5f7fa] pt-28 pb-20">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="site-container">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
               <h1 className="text-3xl md:text-5xl font-extrabold text-[#1a3a52]">

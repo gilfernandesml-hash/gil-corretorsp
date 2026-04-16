@@ -241,7 +241,7 @@ const PropertyListPage = () => {
       />
       
       <div className="min-h-screen bg-[#f5f7fa] pt-24 pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="site-container">
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
             <div>

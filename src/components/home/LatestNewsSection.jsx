@@ -35,11 +35,11 @@ const LatestNewsSection = () => {
 
   return (
     <section className="py-20 bg-[#f5f7fa] border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="site-container">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
           <div>
             <h2 className="text-3xl md:text-4xl font-extrabold text-[#1a3a52]">Últimas Notícias</h2>
-            <p className="text-gray-500 mt-2">Fique por dentro das novidades do mercado imobiliário.</p>
+            <p className="text-gray-500 mt-3 max-w-xl">Conteúdo estratégico para quem quer comprar, vender ou investir melhor.</p>
           </div>
           <Link to="/blog" className="md:self-end">
             <Button variant="link" className="text-[#0d5a7a] px-0">Ver todos os artigos</Button>

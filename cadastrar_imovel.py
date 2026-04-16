@@ -1,440 +1,221 @@
-from pathlib import Path
-import os
-import sys
 import time
-from typing import Optional
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+from pathlib import Path
+from playwright.sync_api import sync_playwright
 
-SITE_URL = "https://gilcorretorsp.com.br"
-IMAGES_DIR = r"C:\Users\Gilberto\Downloads\Vivaz Connection Adolfo Pinheiro"
+# 📂 NOVO CAMINHO
+IMAGES_DIR = r"C:\Users\Gilberto\gilcorretorsp\Vivaz Connection Adolfo Pinheiro"
 
-DADOS_IMOVEL = {
-    "titulo": "Vivaz Connection Adolfo Pinheiro – Aptos 1 e 2 Dorms perto do Metrô",
-    "descricao": """Apartamento à venda no Vivaz Connection Adolfo Pinheiro, localizado em Santo Amaro, Zona Sul de São Paulo, a poucos minutos da estação de metrô Adolfo Pinheiro (Linha Lilás).
+DADOS = {
+    "titulo": "Vivaz Connection Adolfo Pinheiro – Apartamentos de 1 e 2 dormitórios em Santo Amaro",
+    "slug": "vivaz-connection-adolfo-pinheiro",
+    "descricao": """Apartamento em lançamento no coração de Santo Amaro, na Zona Sul de São Paulo, com excelente localização a poucos passos da estação de metrô Adolfo Pinheiro.
 
-O empreendimento oferece apartamentos de 1 e 2 dormitórios com plantas inteligentes, metragem de 24 m² a 44 m², ideal para quem busca o primeiro imóvel ou uma excelente oportunidade de investimento.
+O empreendimento oferece unidades de 1 e 2 dormitórios com plantas inteligentes, pensadas para otimizar espaço, conforto e funcionalidade no dia a dia.
 
-Com lazer completo, o condomínio conta com piscina, academia, salão de festas, churrasqueira, playground, pet place e bicicletário, garantindo conforto e praticidade no dia a dia.
+Ideal para quem busca o primeiro imóvel ou investimento, com condições facilitadas pelo programa Minha Casa Minha Vida, além de fácil acesso a comércios, serviços, transporte e lazer.
 
-Localização privilegiada com fácil acesso ao Largo Treze, Mais Shopping, Sesc Santo Amaro, supermercados, escolas e ampla infraestrutura de comércio e serviços.
+Características principais:
 
-Condições facilitadas pelo programa Minha Casa Minha Vida, com possibilidade de uso do FGTS e subsídios do governo.
+Próximo ao metrô, piscina, academia, salão de festas, churrasqueira, playground, pet place, bicicletário.
 
-Entre em contato para mais informações e agende sua visita.""",
-    "preco": "225000",
-    "endereco": "Rua Doutor Antônio Bento, 104",
+Condomínio:
+
+Vivaz Connection Adolfo Pinheiro
+
+Previsão de entrega:
+
+Dezembro de 2028 a Fevereiro de 2029""",
     "bairro": "Santo Amaro",
-    "cidade": "São Paulo",
-    "estado": "SP",
-    "area": "24 a 44 m²",
+    "endereco": "Rua Doutor Antônio Bento",
+    "preco": "225000",
+    "preco_promocional": "224999",
+    "area": "24",
+    "quartos": "1",
     "banheiros": "1",
     "vagas": "0",
-    "condominio": "Vivaz Connection Adolfo Pinheiro",
-    "status": "Lançamento / Em construção",
-    "previsao_entrega": "Dezembro de 2028 a Fevereiro de 2029",
+    "lat": "-23.6470671",
+    "lng": "-48.7059212",
+    "seo_titulo": "Vivaz Connection Adolfo Pinheiro em Santo Amaro",
+    "seo_desc": "Apartamento à venda em Santo Amaro próximo ao metrô com lazer completo."
 }
 
-EMAIL = os.getenv("GIL_LOGIN", "")
-PASSWORD = os.getenv("GIL_PASSWORD", "")
+def type_human(locator, text):
+    locator.click()
+    locator.page.keyboard.press("Control+A")
+    locator.page.keyboard.press("Delete")
+    locator.page.keyboard.type(str(text), delay=20)
 
+# 🔥 separa imagens e plantas
+def separar_arquivos():
+    imagens = []
+    plantas = []
 
-def log(msg: str):
-    print(f"[INFO] {msg}")
-
-
-def warn(msg: str):
-    print(f"[AVISO] {msg}")
-
-
-def first_existing_file_list(folder: str):
-    p = Path(folder)
-    if not p.exists():
-        raise FileNotFoundError(f"Pasta de imagens não encontrada: {folder}")
-    files = []
-    for ext in ("*.jpg", "*.jpeg", "*.png", "*.webp"):
-        files.extend(sorted(p.glob(ext)))
-    return [str(f) for f in files if f.is_file()]
-
-
-def safe_click(page, selectors, timeout=3000) -> bool:
-    for sel in selectors:
-        try:
-            page.locator(sel).first.wait_for(state="visible", timeout=timeout)
-            page.locator(sel).first.click(timeout=timeout)
-            return True
-        except Exception:
+    for f in Path(IMAGES_DIR).rglob("*.*"):
+        if not f.is_file():
             continue
-    return False
 
+        caminho = str(f).lower()
 
-def safe_fill(page, selectors, value: str, timeout=3000) -> bool:
-    for sel in selectors:
-        try:
-            loc = page.locator(sel).first
-            loc.wait_for(state="visible", timeout=timeout)
-            loc.click(timeout=timeout)
-            try:
-                loc.fill("")
-            except Exception:
-                pass
-            loc.press("Control+A")
-            loc.press("Delete")
-            loc.type(value, delay=20)
-            return True
-        except Exception:
-            continue
-    return False
+        if "plantas" in caminho or "planta" in caminho:
+            plantas.append(str(f))
+        else:
+            imagens.append(str(f))
 
+    return imagens, plantas
 
-def try_fill_by_label_or_placeholder(page, hints, value: str) -> bool:
-    selectors = []
-
-    for hint in hints:
-        selectors += [
-            f'input[placeholder*="{hint}" i]',
-            f'textarea[placeholder*="{hint}" i]',
-            f'input[name*="{hint.lower()}" i]',
-            f'textarea[name*="{hint.lower()}" i]',
-            f'input[id*="{hint.lower().replace(" ", "")}" i]',
-            f'textarea[id*="{hint.lower().replace(" ", "")}" i]',
-        ]
-
-    if safe_fill(page, selectors, value):
-        return True
-
-    for hint in hints:
-        try:
-            page.get_by_label(hint, exact=False).click()
-            page.keyboard.press("Control+A")
-            page.keyboard.press("Delete")
-            page.keyboard.type(value, delay=20)
-            return True
-        except Exception:
-            pass
-
-    for hint in hints:
-        try:
-            label = page.locator(f'text="{hint}"').first
-            if label.count() > 0:
-                label.scroll_into_view_if_needed()
-                label.click()
-                page.keyboard.type(value, delay=20)
-                return True
-        except Exception:
-            pass
-
-    return False
-
-
-def try_select_option(page, label_hints, option_text) -> bool:
-    for hint in label_hints:
-        try:
-            page.get_by_label(hint, exact=False).select_option(label=option_text)
-            return True
-        except Exception:
-            pass
-
-    for hint in label_hints:
-        try:
-            page.locator(f'select[name*="{hint.lower()}" i], select[id*="{hint.lower()}" i]').first.select_option(label=option_text)
-            return True
-        except Exception:
-            pass
-
-    for hint in label_hints:
-        try:
-            page.locator(f'text="{hint}"').first.click()
-            page.locator(f'text="{option_text}"').last.click()
-            return True
-        except Exception:
-            pass
-
-    return False
-
-
-def wait_user_if_needed(page):
-    log("Verificando se já está logado...")
+def fechar_modal(page):
     try:
-        page.wait_for_load_state("networkidle", timeout=5000)
-    except Exception:
+        page.keyboard.press("Escape")
+        print("✅ Modal fechado")
+    except:
         pass
 
-    dashboard_markers = [
-        'text=Dashboard',
-        'text=Meus Imóveis',
-        'text=Adicionar Imóvel',
-        'text=Adicionar imóvel',
-    ]
-
-    if any(page.locator(sel).count() > 0 for sel in dashboard_markers):
-        log("Sessão já parece estar logada.")
+# 📸 upload imagens
+def upload_imagens(page, imagens):
+    if not imagens:
         return
 
-    log("Tentando login automático.")
-    login_done = False
+    print(f"📸 Enviando imagens ({len(imagens)})")
 
-    if EMAIL and PASSWORD:
-        email_selectors = [
-            'input[type="email"]',
-            'input[name*="email" i]',
-            'input[placeholder*="email" i]',
-            'input[name*="login" i]',
-        ]
-        password_selectors = [
-            'input[type="password"]',
-            'input[name*="senha" i]',
-            'input[placeholder*="senha" i]',
-            'input[name*="password" i]',
-        ]
-        safe_fill(page, email_selectors, EMAIL)
-        safe_fill(page, password_selectors, PASSWORD)
+    page.get_by_role("button", name="Carregar Imagens").first.click()
+    page.wait_for_timeout(2000)
 
-        if safe_click(page, [
-            'button:has-text("Entrar")',
-            'button:has-text("Login")',
-            'input[type="submit"]',
-        ]):
-            login_done = True
+    inputs = page.locator('input[type="file"]')
 
-    if not login_done:
-        warn("Não consegui concluir o login automático. Faça login manualmente.")
-        input("Depois de logar e chegar no painel, pressione ENTER aqui... ")
-    else:
-        time.sleep(3)
-
-    log("Continuando após verificação de login.")
-
-
-def navigate_to_new_property(page):
-    log("Indo para o painel.")
-    page.goto(SITE_URL, wait_until="domcontentloaded")
-
-    possible_targets = [
-        f"{SITE_URL}/dashboard",
-        f"{SITE_URL}/painel",
-        f"{SITE_URL}/admin",
-    ]
-
-    for url in possible_targets:
+    for i in range(inputs.count()):
         try:
-            page.goto(url, wait_until="domcontentloaded", timeout=8000)
-            if page.locator('text=Dashboard').count() > 0 or page.locator('text=Meus Imóveis').count() > 0:
-                break
-        except Exception:
-            continue
+            inputs.nth(i).set_input_files(imagens)
+            time.sleep(3)
+            print("✅ Imagens enviadas")
+            break
+        except:
+            pass
 
-    log("Tentando abrir Adicionar Imóvel.")
-    clicked = safe_click(page, [
-        'text=Adicionar Imóvel',
-        'text=Adicionar imóvel',
-        'text=Novo Imóvel',
-        'text=Novo imóvel',
-        'text=Meus Imóveis',
-        'button:has-text("+")',
-        'a:has-text("+")',
-    ], timeout=2500)
+    fechar_modal(page)
 
-    if page.locator('text=Meus Imóveis').count() > 0:
-        safe_click(page, [
-            'text=Adicionar Imóvel',
-            'text=Adicionar imóvel',
-            'text=Novo Imóvel',
-            'text=Novo imóvel',
-            'button:has-text("+")',
-            'a:has-text("+")',
-        ], timeout=2500)
-
-    time.sleep(2)
-
-    if not clicked and page.locator('text=Salvar Imóvel').count() == 0 and page.locator('text=Salvar imóvel').count() == 0:
-        warn("Não consegui chegar sozinho no formulário. Abra manualmente a tela 'Adicionar Imóvel'.")
-        input("Quando a página 'Adicionar Imóvel' estiver aberta, pressione ENTER aqui... ")
-
-
-def fill_form(page):
-    log("Preenchendo título.")
-    ok = try_fill_by_label_or_placeholder(
-        page,
-        ["Título do Anúncio", "Título", "Ex: Apartamento de Luxo na Vila Mariana"],
-        DADOS_IMOVEL["titulo"],
-    )
-    if not ok:
-        warn("Não consegui preencher o Título automaticamente.")
-
-    log("Preenchendo descrição.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Descrição", "Detalhes", "Descrição do imóvel"],
-        DADOS_IMOVEL["descricao"],
-    )
-
-    log("Preenchendo preço.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Preço", "Valor", "Preço do imóvel"],
-        DADOS_IMOVEL["preco"],
-    )
-
-    log("Preenchendo endereço.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Endereço", "Rua", "Logradouro"],
-        DADOS_IMOVEL["endereco"],
-    )
-
-    log("Preenchendo bairro.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Bairro"],
-        DADOS_IMOVEL["bairro"],
-    )
-
-    log("Preenchendo cidade.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Cidade"],
-        DADOS_IMOVEL["cidade"],
-    )
-
-    log("Preenchendo estado.")
-    if not try_select_option(page, ["Estado", "UF"], DADOS_IMOVEL["estado"]):
-        try_fill_by_label_or_placeholder(page, ["Estado", "UF"], DADOS_IMOVEL["estado"])
-
-    log("Preenchendo área.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Área", "Área útil", "Metragem"],
-        DADOS_IMOVEL["area"],
-    )
-
-    log("Preenchendo banheiros.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Banheiros", "Banheiro"],
-        DADOS_IMOVEL["banheiros"],
-    )
-
-    log("Preenchendo vagas.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Vagas", "Garagem"],
-        DADOS_IMOVEL["vagas"],
-    )
-
-    log("Preenchendo condomínio.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Condomínio", "Nome do condomínio"],
-        DADOS_IMOVEL["condominio"],
-    )
-
-    log("Preenchendo status.")
-    if not try_select_option(page, ["Status"], DADOS_IMOVEL["status"]):
-        try_fill_by_label_or_placeholder(page, ["Status"], DADOS_IMOVEL["status"])
-
-    log("Preenchendo previsão de entrega.")
-    try_fill_by_label_or_placeholder(
-        page,
-        ["Previsão de entrega", "Entrega"],
-        DADOS_IMOVEL["previsao_entrega"],
-    )
-
-
-def upload_images(page):
-    files = first_existing_file_list(IMAGES_DIR)
-    if not files:
-        warn("Nenhuma imagem encontrada.")
+# 📐 upload plantas (ROBUSTO)
+def upload_plantas(page, plantas):
+    if not plantas:
         return
 
-    log(f"Encontradas {len(files)} imagens.")
+    print(f"📐 Enviando plantas ({len(plantas)})")
 
-    file_inputs = page.locator('input[type="file"]')
-    count = file_inputs.count()
+    try:
+        titulo = page.locator("text=Plantas Humanizadas").first
+        titulo.scroll_into_view_if_needed()
 
-    if count > 0:
-        for i in range(count):
+        container = titulo.locator("xpath=ancestor::div[3]")
+        botao = container.locator('button:has-text("Carregar Imagens")')
+
+        if botao.count() == 0:
+            raise Exception("Botão não encontrado")
+
+        botao.first.click()
+
+        page.wait_for_timeout(2000)
+
+        inputs = page.locator('input[type="file"]')
+
+        for i in range(inputs.count()):
             try:
-                file_inputs.nth(i).set_input_files(files)
-                log("Upload enviado para input[type=file].")
+                inputs.nth(i).set_input_files(plantas)
+                print("✅ Plantas enviadas")
                 time.sleep(3)
                 break
-            except Exception:
-                continue
-    else:
-        warn("Não achei input[type=file]. Tente clicar manualmente no botão de mídia antes de continuar.")
-        input("Abra a área de upload de imagens no navegador e pressione ENTER aqui... ")
-        file_inputs = page.locator('input[type="file"]')
-        if file_inputs.count() > 0:
-            file_inputs.first.set_input_files(files)
-            log("Upload enviado após abertura manual da galeria.")
-            time.sleep(3)
-        else:
-            warn("Ainda não encontrei input de arquivo.")
+            except:
+                pass
 
-    try:
-        safe_click(page, [
-            'text=Definir como capa',
-            'text=Imagem principal',
-            'text=Capa',
-            'button:has-text("Capa")',
-        ], timeout=2000)
-    except Exception:
-        pass
+        fechar_modal(page)
 
+    except Exception as e:
+        print("⚠️ Erro no método principal:", e)
+        print("👉 Tentando fallback...")
 
-def save_property(page):
-    log("Tentando salvar imóvel.")
-    ok = safe_click(page, [
-        'button:has-text("Salvar Imóvel")',
-        'button:has-text("Salvar imóvel")',
-        'text=Salvar Imóvel',
-        'text=Salvar imóvel',
-        'input[type="submit"]',
-    ], timeout=4000)
+        try:
+            page.get_by_role("button", name="Carregar Imagens").last.click()
+            page.wait_for_timeout(2000)
 
-    if not ok:
-        warn("Não consegui clicar em 'Salvar imóvel'. Clique manualmente no navegador.")
-        input("Depois de salvar, pressione ENTER aqui... ")
-        return
+            page.locator('input[type="file"]').last.set_input_files(plantas)
 
-    time.sleep(5)
+            print("✅ Plantas enviadas via fallback")
 
+            fechar_modal(page)
 
-def show_final_url(page):
-    log(f"URL atual: {page.url}")
-    print("\n=== LINK FINAL ===")
-    print(page.url)
-    print("==================\n")
+        except Exception as e2:
+            print("❌ Falha total no upload de plantas:", e2)
 
-
-def main():
+def run():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False, slow_mo=200)
-        context = browser.new_context(viewport={"width": 1440, "height": 900})
-        page = context.new_page()
+        page = browser.new_page()
 
-        page.goto(SITE_URL, wait_until="domcontentloaded")
-        wait_user_if_needed(page)
-        navigate_to_new_property(page)
+        page.goto("https://www.gilcorretorsp.com.br/")
 
-        input("Quando a tela de cadastro estiver aberta e visível, pressione ENTER para preencher... ")
+        input("👉 Faça login e ENTER...")
+        input("👉 Abra 'Adicionar Imóvel' e ENTER...")
 
-        fill_form(page)
-        upload_images(page)
+        # básico
+        type_human(page.get_by_placeholder("Ex: Apartamento de Luxo na"), DADOS["titulo"])
+        type_human(page.locator('input[name="slug"]'), DADOS["slug"])
 
-        print("\nRevise no navegador se os campos ficaram corretos.")
-        input("Se estiver tudo certo, pressione ENTER para tentar salvar... ")
+        editor = page.locator(".ql-editor")
+        editor.click()
+        page.keyboard.press("Control+A")
+        page.keyboard.press("Delete")
+        page.keyboard.type(DADOS["descricao"], delay=5)
 
-        save_property(page)
-        show_final_url(page)
+        type_human(page.locator('input[name="neighborhood"]'), DADOS["bairro"])
+        type_human(page.locator('input[name="address"]'), DADOS["endereco"])
+        type_human(page.locator('input[name="lat"]'), DADOS["lat"])
+        type_human(page.locator('input[name="lng"]'), DADOS["lng"])
 
-        input("Pressione ENTER para encerrar...")
+        # detalhes
+        page.get_by_role("tab", name="Detalhes").click()
+        page.get_by_role("radio", name="Venda").click()
+
+        type_human(page.locator('input[name="price"]'), DADOS["preco"])
+        type_human(page.get_by_placeholder("Ex:"), DADOS["preco_promocional"])
+        type_human(page.locator('input[name="area"]'), DADOS["area"])
+        type_human(page.locator('input[name="bedrooms"]'), DADOS["quartos"])
+        type_human(page.locator('input[name="bathrooms"]'), DADOS["banheiros"])
+        type_human(page.locator('input[name="parking_spaces"]'), DADOS["vagas"])
+
+        # mídia
+        page.get_by_role("tab", name="Mídia").click()
+
+        imagens, plantas = separar_arquivos()
+
+        upload_imagens(page, imagens)
+        upload_plantas(page, plantas)
+
+        # infra
+        page.get_by_role("tab", name="Infra").click()
+
+        for item in ["Piscina adulto", "Academia", "Churrasqueira"]:
+            try:
+                page.get_by_role("checkbox", name=item).click()
+            except:
+                pass
+
+        # SEO
+        page.get_by_role("tab", name="SEO", exact=True).click()
+
+        type_human(page.get_by_placeholder("Ex: Apartamento 3 quartos em"), DADOS["seo_titulo"])
+        type_human(page.get_by_placeholder("Ex: Apartamento moderno com 3"), DADOS["seo_desc"])
+
+        # final
+        page.get_by_role("tab", name="Contato").click()
+
+        input("👉 Revise e ENTER para salvar...")
+
+        page.get_by_role("button", name="Salvar Imóvel").click()
+
+        time.sleep(5)
+        print("\n🎉 IMÓVEL CADASTRADO COM SUCESSO")
+        print("🔗 URL:", page.url)
+
+        input("ENTER para fechar...")
         browser.close()
 
-
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nEncerrado pelo usuário.")
-        sys.exit(0)
+    run()

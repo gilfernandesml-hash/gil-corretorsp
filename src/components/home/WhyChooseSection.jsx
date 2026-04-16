@@ -27,7 +27,7 @@ const ITEMS = [
 const WhyChooseSection = () => {
   return (
     <section className="py-20 bg-white border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="site-container">
         <div className="text-center mb-14">
           <h2 className="text-3xl md:text-4xl font-extrabold text-[#1a3a52]">
             Por que Escolher a Gil Fernandes

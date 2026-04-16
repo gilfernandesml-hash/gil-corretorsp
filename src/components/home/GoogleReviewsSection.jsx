@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 const GoogleReviewsSection = ({ googleMapsUrl }) => {
   return (
     <section className="py-20 bg-white border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="site-container">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
           <div>
             <h2 className="text-3xl md:text-4xl font-extrabold text-[#1a3a52]">Avaliações no Google</h2>

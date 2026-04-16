@@ -151,7 +151,7 @@ const HomePage = () => {
              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
           </div>
 
-          <div className="relative z-10 max-w-7xl mx-auto px-4 text-center pt-24">
+          <div className="relative z-10 site-container text-center pt-24">
             <h1
               className="text-white drop-shadow-lg"
               style={{
@@ -242,7 +242,7 @@ const HomePage = () => {
 
         {/* FEATURED PROPERTIES - Lazy Loaded */}
         <section className="py-20 bg-[#f5f7fa]">
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="site-container">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-[#1a3a52]">Imóveis em Destaque</h2>
@@ -283,7 +283,7 @@ const HomePage = () => {
 
         {/* STATS - Static Content */}
         <section className="py-16 bg-white border-t border-gray-100">
-          <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 text-center">
+          <div className="site-container grid md:grid-cols-3 gap-8 text-center">
             <StatItem icon={Award} value="15+ anos" label="Experiência de Mercado" />
             <StatItem icon={Building2} value="100+" label="Imóveis Vendidos" />
             <StatItem icon={Users} value="500+" label="Clientes Satisfeitos" />

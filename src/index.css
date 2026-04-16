@@ -89,6 +89,12 @@
   }
 }
 
+@layer components {
+  .site-container {
+    @apply max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
 /* Custom Leaflet Map Styles */
 .leaflet-container {
   width: 100%;

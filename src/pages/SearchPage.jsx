@@ -123,7 +123,7 @@ const SearchPage = () => {
       </Helmet>
 
       <div className="min-h-screen bg-[#f5f7fa] pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="site-container py-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-[#1a3a52] mb-2">Buscar Imóveis</h1>

@@ -31,11 +31,11 @@ const STEPS = [
 const HowItWorksSection = () => {
   return (
     <section className="py-20 bg-[#0d5a7a] text-white">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="site-container">
         <div className="text-center mb-14">
           <h2 className="text-3xl md:text-4xl font-extrabold">Como Funciona</h2>
           <p className="text-white/80 mt-3">
-            Um processo simples, ágil e seguro para a sua conquista.
+            Uma experiência premium, do primeiro contato à assinatura.
           </p>
         </div>
 

@@ -150,7 +150,7 @@ const NeighborhoodPage = () => {
                     image={neighborhood.image_url || properties[0]?.images?.[0]} 
                 />
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-16 relative z-20">
+                <div className="site-container -mt-16 relative z-20">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left Column: Content & Listings */}
                         <div className="lg:col-span-2 space-y-12">

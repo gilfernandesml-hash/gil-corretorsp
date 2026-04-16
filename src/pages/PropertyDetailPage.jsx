@@ -112,7 +112,7 @@ const PropertyDetailPage = () => {
       />
 
       <div className="bg-[#f5f7fa] min-h-screen pt-24 pb-16">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="site-container">
           <Link to="/imoveis" className="inline-flex items-center mb-6 text-gray-600 hover:text-gray-900">
             <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
           </Link>

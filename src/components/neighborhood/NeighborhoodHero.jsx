@@ -26,10 +26,11 @@ const NeighborhoodHero = ({ neighborhood, image, loading = false }) => {
 
       {/* Content */}
       <div className="absolute inset-0 z-10 flex flex-col justify-end pb-12 md:pb-20">
-        <div className="max-w-7xl mx-auto px-4 w-full">
+        <div className="site-container w-full">
           {/* Breadcrumbs */}
           <nav className="flex items-center text-sm text-gray-300 mb-4 font-medium">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <span className="mx-2">/</span>
             <ChevronRight className="w-4 h-4 mx-2" />
             <span className="text-white capitalize">{neighborhood}</span>
           </nav>
