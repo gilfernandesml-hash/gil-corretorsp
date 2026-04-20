@@ -1,13 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * DEPRECATED: Use @/lib/supabase.js instead
+ * 
+ * This file is kept for backwards compatibility only.
+ * All imports should be migrated to use the centralized supabase client.
+ * 
+ * Migration path:
+ * - OLD: import customSupabaseClient from '@/lib/customSupabaseClient';
+ * - NEW: import { supabase } from '@/lib/supabase';
+ */
 
-const supabaseUrl = 'https://gtfdrselcbogwzkrnqmg.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0ZmRyc2VsY2JvZ3d6a3JucW1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODU3MTgsImV4cCI6MjA4MzQ2MTcxOH0.SrrP9T3E2bFRbwlzm5nfhLESQHKGJnmzIuaYsRMt5Rg';
+import { supabase } from './supabase';
 
-const customSupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+console.warn('⚠️ DEPRECATED: customSupabaseClient.js is deprecated. Use @/lib/supabase.js instead.');
 
-export default customSupabaseClient;
-
-export { 
-    customSupabaseClient,
-    customSupabaseClient as supabase,
-};
+export default supabase;
+export { supabase, supabase as customSupabaseClient };

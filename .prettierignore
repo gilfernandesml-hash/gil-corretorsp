@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+.vite
+coverage
+public
+*.min.js
+*.min.css
+.next
+.vercel
